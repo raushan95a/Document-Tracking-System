@@ -27,6 +27,7 @@ const DocumentDetail = () => {
   const [description, setDescription] = useState("");
   const [department, setDepartment] = useState("");
   const [remarks, setRemarks] = useState("");
+  const [newFile, setNewFile] = useState(null);
 
   const [action, setAction] = useState("Approve");
   const [assignedTo, setAssignedTo] = useState("");
@@ -158,13 +159,24 @@ const DocumentDetail = () => {
     setSavingMetadata(true);
 
     try {
-      await api.put(`/documents/${id}`, {
-        title,
-        description,
-        remarks,
-        department: canReview ? department : undefined,
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("remarks", remarks);
+      if (canReview && department) {
+        formData.append("department", department);
+      }
+      if (newFile) {
+        formData.append("file", newFile);
+      }
+
+      await api.put(`/documents/${id}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
+      setNewFile(null);
       toast.success("Document details updated");
       await Promise.all([fetchDocument(), fetchLogs()]);
     } catch (error) {
@@ -182,7 +194,7 @@ const DocumentDetail = () => {
     try {
       await api.put(`/workflow/${id}`, {
         action,
-        assignedTo: assignedTo || null,
+        assignedTo: action === "Forward" ? (assignedTo || null) : null,
         remarks,
         targetDepartment: action === "Forward" ? targetDepartment : undefined,
       });
@@ -320,6 +332,17 @@ const DocumentDetail = () => {
             />
           </div>
 
+          <div className="mt-4">
+            <label className="block text-sm text-dark font-medium mb-1">Update Document File (Optional)</label>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+              onChange={(event) => setNewFile(event.target.files?.[0] || null)}
+              className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
+            />
+            {newFile && <p className="text-dark text-xs mt-1">Replacing with: {newFile.name}</p>}
+          </div>
+
           <button
             type="submit"
             disabled={savingMetadata}
@@ -351,26 +374,36 @@ const DocumentDetail = () => {
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm text-dark font-medium mb-1">Assign To</label>
-              <select
-                value={assignedTo}
-                onChange={(event) => setAssignedTo(event.target.value)}
-                className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
-              >
-                <option value="">Unassigned</option>
-                {users.map((item) => (
-                  <option key={item._id} value={item._id}>
-                    {item.name} ({item.role})
-                  </option>
-                ))}
-              </select>
-              {loadingUsers && (
-                <div className="mt-2">
-                  <div className="animate-spin border-2 border-dark border-t-transparent rounded-full w-5 h-5" />
-                </div>
-              )}
-            </div>
+            {action === "Forward" && (
+              <div>
+                <label className="block text-sm text-dark font-medium mb-1">Assign To</label>
+                <select
+                  value={assignedTo}
+                  onChange={(event) => {
+                    const val = event.target.value;
+                    setAssignedTo(val);
+                    
+                    const selectedUser = users.find(u => u._id === val);
+                    if (selectedUser && selectedUser.department) {
+                      setTargetDepartment(selectedUser.department);
+                    }
+                  }}
+                  className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
+                >
+                  <option value="">Unassigned</option>
+                  {users.map((item) => (
+                    <option key={item._id} value={item._id}>
+                      {item.name} ({item.role})
+                    </option>
+                  ))}
+                </select>
+                {loadingUsers && (
+                  <div className="mt-2">
+                    <div className="animate-spin border-2 border-dark border-t-transparent rounded-full w-5 h-5" />
+                  </div>
+                )}
+              </div>
+            )}
 
             {action === "Forward" && (
               <div>

@@ -64,6 +64,7 @@ router.get(
 
 router.put(
   "/:id",
+  upload.single("file"),
   [
     param("id").isMongoId().withMessage("Invalid document id"),
     body("title").optional().isString().withMessage("Title must be a string"),

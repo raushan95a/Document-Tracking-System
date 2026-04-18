@@ -89,12 +89,10 @@ const deleteUser = async (req, res) => {
 
 const getAssignableUsers = async (req, res) => {
   try {
-    const query = {};
-
-    if (req.user.role === "manager") {
-      query.department = req.user.department;
-      query.role = { $in: ["employee", "manager"] };
-    }
+    const query = {
+      _id: { $ne: req.user._id },
+      role: { $ne: "admin" }
+    };
 
     const users = await User.find(query)
       .select("_id name username email role department")

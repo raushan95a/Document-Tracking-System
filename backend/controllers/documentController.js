@@ -246,6 +246,18 @@ const updateDocument = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
+    if (req.file) {
+      if (document.fileUrl) {
+        const relativePath = document.fileUrl.replace(/^\//, "");
+        const filePath = path.join(__dirname, "..", relativePath);
+
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
+      document.fileUrl = `/uploads/${req.file.filename}`;
+    }
+
     if (typeof title !== "undefined") {
       document.title = title;
     }
