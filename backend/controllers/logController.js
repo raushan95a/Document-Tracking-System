@@ -8,21 +8,41 @@ const sameDepartment = (left, right) => {
   return a && b && a === b;
 };
 
+const managerHasDepartment = (user) => {
+  return typeof user?.department === "string" && user.department.trim().length > 0;
+};
+
+const getIdString = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (value._id) {
+    return value._id.toString();
+  }
+
+  if (typeof value.toString === "function") {
+    return value.toString();
+  }
+
+  return "";
+};
+
 const hasDocumentAccess = (user, document, workflow) => {
   if (user.role === "admin") {
     return true;
   }
 
   if (user.role === "employee") {
-    return document.uploadedBy.toString() === user._id.toString();
+    return getIdString(document.uploadedBy) === getIdString(user._id);
   }
 
   if (user.role === "manager") {
-    if (sameDepartment(document.department, user.department)) {
-      return true;
-    }
-
-    return workflow?.assignedTo?.toString() === user._id.toString();
+    return true;
   }
 
   return false;

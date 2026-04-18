@@ -35,12 +35,18 @@ const Dashboard = () => {
       params.set("status", filters.status);
     }
 
-    if (filters.department) {
+    if (filters.department && user?.role !== "manager") {
       params.set("department", filters.department);
     }
 
     return params.toString();
-  }, [filters.department, filters.search, filters.status]);
+  }, [filters.department, filters.search, filters.status, user?.role]);
+
+  useEffect(() => {
+    if (user?.role === "manager") {
+      dispatch(resetDashboardFilters());
+    }
+  }, [dispatch, user?.role]);
 
   const fetchDocuments = useCallback(
     async (showLoader = true) => {

@@ -14,21 +14,45 @@ const sameDepartment = (left, right) => {
   return a && b && a === b;
 };
 
+const managerHasDepartment = (user) => {
+  return typeof user?.department === "string" && user.department.trim().length > 0;
+};
+
+const buildDepartmentRegex = (department) => {
+  return new RegExp(`^\\s*${escapeRegex((department || "").trim())}\\s*$`, "i");
+};
+
+const getIdString = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (value._id) {
+    return value._id.toString();
+  }
+
+  if (typeof value.toString === "function") {
+    return value.toString();
+  }
+
+  return "";
+};
+
 const hasDocumentAccess = (user, document, workflow) => {
   if (user.role === "admin") {
     return true;
   }
 
   if (user.role === "employee") {
-    return document.uploadedBy.toString() === user._id.toString();
+    return getIdString(document.uploadedBy) === getIdString(user._id);
   }
 
   if (user.role === "manager") {
-    if (sameDepartment(document.department, user.department)) {
-      return true;
-    }
-
-    return workflow?.assignedTo?.toString() === user._id.toString();
+    return true;
   }
 
   return false;
@@ -36,25 +60,16 @@ const hasDocumentAccess = (user, document, workflow) => {
 
 const getVisibilityQuery = (user, filters) => {
   const query = {};
-  const pendingStatuses = ["Submitted", "Under Review"];
 
   if (user.role === "employee") {
     query.uploadedBy = user._id;
-  }
-
-  if (user.role === "manager") {
-    query.department = user.department;
-
-    if (!filters.status) {
-      query.status = { $in: pendingStatuses };
-    }
   }
 
   if (filters.status) {
     query.status = filters.status;
   }
 
-  if (filters.department && user.role !== "manager") {
+  if (filters.department) {
     query.department = new RegExp(`^${escapeRegex(filters.department.trim())}$`, "i");
   }
 
@@ -133,7 +148,7 @@ const createDocument = async (req, res) => {
 
     const defaultManager = await User.findOne({
       role: "manager",
-      department: resolvedDepartment,
+      department: buildDepartmentRegex(resolvedDepartment),
     }).select("_id");
 
     const workflow = await Workflow.create({
@@ -166,6 +181,7 @@ const getDocuments = async (req, res) => {
       status: req.query.status,
       department: req.query.department,
     };
+
     const query = getVisibilityQuery(req.user, filters);
 
     const documents = await Document.find(query)
@@ -250,7 +266,7 @@ const updateDocument = async (req, res) => {
 
       const nextManager = await User.findOne({
         role: "manager",
-        department: department,
+        department: buildDepartmentRegex(department),
       }).select("_id");
 
       workflow.assignedTo = nextManager?._id || null;
