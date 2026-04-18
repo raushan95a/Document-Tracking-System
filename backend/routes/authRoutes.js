@@ -26,7 +26,7 @@ router.post(
       .withMessage("Username must be at least 3 characters"),
     body("role")
       .optional()
-      .isIn(["employee", "manager", "admin"])
+      .isIn(["employee", "manager"])
       .withMessage("Invalid role"),
     body("department")
       .trim()

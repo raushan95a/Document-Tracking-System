@@ -4,6 +4,7 @@
   "description": "REST API backend for Document Tracking System",
   "main": "server.js",
   "scripts": {
+    "seed:admin": "node scripts/seedAdmin.js",
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
