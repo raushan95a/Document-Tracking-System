@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import StatusBadge from "../components/StatusBadge";
 import { useAuth } from "../context/AuthContext";
-import api from "../services/api";
+import api, { getServerBaseUrl } from "../services/api";
+import { getSocket } from "../services/socket";
 
 const formatDate = (dateString) =>
   new Date(dateString).toLocaleDateString("en-IN", {
@@ -15,24 +16,45 @@ const formatDate = (dateString) =>
 const DocumentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   const [document, setDocument] = useState(null);
   const [logs, setLogs] = useState([]);
   const [users, setUsers] = useState([]);
 
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [department, setDepartment] = useState("");
+  const [remarks, setRemarks] = useState("");
+
+  const [action, setAction] = useState("Approve");
+  const [assignedTo, setAssignedTo] = useState("");
+  const [targetDepartment, setTargetDepartment] = useState("");
+
   const [loadingDocument, setLoadingDocument] = useState(true);
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(false);
-  const [submittingUpdate, setSubmittingUpdate] = useState(false);
+  const [savingMetadata, setSavingMetadata] = useState(false);
+  const [submittingWorkflow, setSubmittingWorkflow] = useState(false);
 
-  const [status, setStatus] = useState("Submitted");
-  const [remarks, setRemarks] = useState("");
-  const [assignedTo, setAssignedTo] = useState("");
+  const canReview = user?.role === "admin" || user?.role === "manager";
+  const isOwner =
+    user?.role === "employee" &&
+    document?.uploadedBy &&
+    document.uploadedBy._id?.toString() === user._id?.toString();
+  const canEditMetadata = canReview || isOwner;
 
-  const canUpdate = user?.role === "admin" || user?.role === "manager";
+  const assigneeDisplay = useMemo(() => {
+    const assignee = document?.workflow?.assignedTo;
 
-  const fetchDocument = async () => {
+    if (!assignee) {
+      return "Unassigned";
+    }
+
+    return `${assignee.name} (${assignee.role})`;
+  }, [document?.workflow?.assignedTo]);
+
+  const fetchDocument = useCallback(async () => {
     setLoadingDocument(true);
 
     try {
@@ -40,7 +62,9 @@ const DocumentDetail = () => {
       const data = response.data;
 
       setDocument(data);
-      setStatus(data.workflow?.currentStage || data.status || "Submitted");
+      setTitle(data.title || "");
+      setDescription(data.description || "");
+      setDepartment(data.department || "");
       setRemarks(data.remarks || "");
 
       const assignedValue = data.workflow?.assignedTo;
@@ -51,15 +75,16 @@ const DocumentDetail = () => {
             : assignedValue._id
           : ""
       );
+      setTargetDepartment(data.department || "");
     } catch (error) {
       const message = error?.response?.data?.message || "Failed to fetch document";
       toast.error(message);
     } finally {
       setLoadingDocument(false);
     }
-  };
+  }, [id]);
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setLoadingLogs(true);
 
     try {
@@ -71,13 +96,17 @@ const DocumentDetail = () => {
     } finally {
       setLoadingLogs(false);
     }
-  };
+  }, [id]);
 
-  const fetchUsers = async () => {
+  const fetchAssignableUsers = useCallback(async () => {
+    if (!canReview) {
+      return;
+    }
+
     setLoadingUsers(true);
 
     try {
-      const response = await api.get("/auth/users");
+      const response = await api.get("/users/assignable");
       setUsers(response.data || []);
     } catch (error) {
       const message = error?.response?.data?.message || "Failed to fetch users";
@@ -85,35 +114,85 @@ const DocumentDetail = () => {
     } finally {
       setLoadingUsers(false);
     }
-  };
+  }, [canReview]);
 
   useEffect(() => {
     fetchDocument();
     fetchLogs();
+    fetchAssignableUsers();
+  }, [fetchAssignableUsers, fetchDocument, fetchLogs]);
 
-    if (canUpdate) {
-      fetchUsers();
+  useEffect(() => {
+    if (!token) {
+      return undefined;
     }
-  }, [id, canUpdate]);
 
-  const handleUpdate = async (event) => {
+    const socket = getSocket(token);
+
+    if (!socket) {
+      return undefined;
+    }
+
+    socket.emit("document:subscribe", id);
+
+    const handleDocumentUpdated = (payload) => {
+      if (payload?.documentId !== id) {
+        return;
+      }
+
+      fetchDocument();
+      fetchLogs();
+    };
+
+    socket.on("document:updated", handleDocumentUpdated);
+
+    return () => {
+      socket.emit("document:unsubscribe", id);
+      socket.off("document:updated", handleDocumentUpdated);
+    };
+  }, [fetchDocument, fetchLogs, id, token]);
+
+  const handleMetadataUpdate = async (event) => {
     event.preventDefault();
-    setSubmittingUpdate(true);
+    setSavingMetadata(true);
 
     try {
       await api.put(`/documents/${id}`, {
-        status,
+        title,
+        description,
         remarks,
-        assignedTo: assignedTo || null,
+        department: canReview ? department : undefined,
       });
 
-      toast.success("Document updated successfully");
+      toast.success("Document details updated");
       await Promise.all([fetchDocument(), fetchLogs()]);
     } catch (error) {
-      const message = error?.response?.data?.message || "Failed to update document";
+      const message = error?.response?.data?.message || "Failed to update document details";
       toast.error(message);
     } finally {
-      setSubmittingUpdate(false);
+      setSavingMetadata(false);
+    }
+  };
+
+  const handleWorkflowSubmit = async (event) => {
+    event.preventDefault();
+    setSubmittingWorkflow(true);
+
+    try {
+      await api.put(`/workflow/${id}`, {
+        action,
+        assignedTo: assignedTo || null,
+        remarks,
+        targetDepartment: action === "Forward" ? targetDepartment : undefined,
+      });
+
+      toast.success(`Document ${action.toLowerCase()}d successfully`);
+      await Promise.all([fetchDocument(), fetchLogs()]);
+    } catch (error) {
+      const message = error?.response?.data?.message || "Failed to update workflow";
+      toast.error(message);
+    } finally {
+      setSubmittingWorkflow(false);
     }
   };
 
@@ -156,6 +235,10 @@ const DocumentDetail = () => {
             <StatusBadge status={document.workflow?.currentStage || document.status || "Submitted"} />
           </div>
           <div>
+            <p className="text-sage text-xs mb-1">Assigned To</p>
+            <p className="text-dark text-sm">{assigneeDisplay}</p>
+          </div>
+          <div>
             <p className="text-sage text-xs mb-1">Uploaded By</p>
             <p className="text-dark text-sm">{document.uploadedBy?.name || "-"}</p>
           </div>
@@ -165,16 +248,11 @@ const DocumentDetail = () => {
           </div>
         </div>
 
-        <div className="mb-4">
-          <p className="text-sage text-xs mb-1">Description</p>
-          <p className="text-dark text-sm">{document.description || "No description"}</p>
-        </div>
-
         {document.fileUrl && (
           <div>
             <p className="text-sage text-xs mb-1">File</p>
             <a
-              href={`http://localhost:5000${document.fileUrl}`}
+              href={`${getServerBaseUrl()}${document.fileUrl}`}
               target="_blank"
               rel="noreferrer"
               className="text-dark underline text-sm"
@@ -185,25 +263,83 @@ const DocumentDetail = () => {
         )}
       </div>
 
-      {canUpdate && (
+      {canEditMetadata && (
         <form
-          onSubmit={handleUpdate}
+          onSubmit={handleMetadataUpdate}
           className="mt-6 bg-cream border border-sage/20 rounded-lg p-6 shadow-sm"
         >
-          <h2 className="text-darkest font-semibold mb-4">Update Document</h2>
+          <h2 className="text-darkest font-semibold mb-4">Update Document Details</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-dark font-medium mb-1">Status</label>
+              <label className="block text-sm text-dark font-medium mb-1">Title</label>
+              <input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm text-dark font-medium mb-1">Department</label>
+              <input
+                value={department}
+                onChange={(event) => setDepartment(event.target.value)}
+                disabled={!canReview}
+                className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm disabled:opacity-70"
+              />
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-sm text-dark font-medium mb-1">Description</label>
+            <textarea
+              rows={3}
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm resize-none"
+            />
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-sm text-dark font-medium mb-1">Remarks</label>
+            <textarea
+              rows={2}
+              value={remarks}
+              onChange={(event) => setRemarks(event.target.value)}
+              className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm resize-none"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={savingMetadata}
+            className="mt-4 bg-dark text-cream px-4 py-2 rounded hover:bg-darkest text-sm disabled:opacity-70"
+          >
+            {savingMetadata ? "Saving..." : "Save Details"}
+          </button>
+        </form>
+      )}
+
+      {canReview && (
+        <form
+          onSubmit={handleWorkflowSubmit}
+          className="mt-6 bg-cream border border-sage/20 rounded-lg p-6 shadow-sm"
+        >
+          <h2 className="text-darkest font-semibold mb-4">Workflow Action</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm text-dark font-medium mb-1">Action</label>
               <select
-                value={status}
-                onChange={(event) => setStatus(event.target.value)}
+                value={action}
+                onChange={(event) => setAction(event.target.value)}
                 className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
               >
-                <option value="Submitted">Submitted</option>
-                <option value="Under Review">Under Review</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
+                <option value="Approve">Approve</option>
+                <option value="Reject">Reject</option>
+                <option value="Forward">Forward</option>
               </select>
             </div>
 
@@ -227,24 +363,26 @@ const DocumentDetail = () => {
                 </div>
               )}
             </div>
-          </div>
 
-          <div className="mt-4">
-            <label className="block text-sm text-dark font-medium mb-1">Remarks</label>
-            <textarea
-              rows={2}
-              value={remarks}
-              onChange={(event) => setRemarks(event.target.value)}
-              className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm resize-none"
-            />
+            {action === "Forward" && (
+              <div>
+                <label className="block text-sm text-dark font-medium mb-1">Target Department</label>
+                <input
+                  value={targetDepartment}
+                  onChange={(event) => setTargetDepartment(event.target.value)}
+                  className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
+                  required
+                />
+              </div>
+            )}
           </div>
 
           <button
             type="submit"
-            disabled={submittingUpdate}
+            disabled={submittingWorkflow}
             className="mt-4 bg-dark text-cream px-4 py-2 rounded hover:bg-darkest text-sm disabled:opacity-70"
           >
-            {submittingUpdate ? "Loading..." : "Update"}
+            {submittingWorkflow ? "Submitting..." : `Submit ${action}`}
           </button>
         </form>
       )}

@@ -15,6 +15,7 @@ const documentLogSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
+    enum: ["Upload", "Forward", "Approve", "Reject"],
   },
   timestamp: {
     type: Date,

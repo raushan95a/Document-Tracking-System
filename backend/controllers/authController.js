@@ -7,9 +7,36 @@ const generateToken = (userId) => {
   });
 };
 
+const normalizeUsername = (value) => {
+  if (!value || typeof value !== "string") {
+    return "";
+  }
+
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9_]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+};
+
+const ensureUniqueUsername = async (requestedUsername, email) => {
+  const emailPrefix = typeof email === "string" ? email.split("@")[0] : "user";
+  const base = normalizeUsername(requestedUsername) || normalizeUsername(emailPrefix) || "user";
+  let candidate = base;
+  let counter = 1;
+
+  while (await User.findOne({ username: candidate })) {
+    candidate = `${base}_${counter}`;
+    counter += 1;
+  }
+
+  return candidate;
+};
+
 const register = async (req, res) => {
   try {
-    const { name, email, password, role, department } = req.body;
+    const { username, name, email, password, role, department } = req.body;
 
     const userExists = await User.findOne({ email });
 
@@ -17,7 +44,10 @@ const register = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    const resolvedUsername = await ensureUniqueUsername(username, email);
+
     const user = await User.create({
+      username: resolvedUsername,
       name,
       email,
       password,
@@ -27,6 +57,7 @@ const register = async (req, res) => {
 
     return res.status(201).json({
       _id: user._id,
+      username: user.username,
       name: user.name,
       email: user.email,
       role: user.role,
@@ -50,6 +81,7 @@ const login = async (req, res) => {
 
     return res.status(200).json({
       _id: user._id,
+      username: user.username,
       name: user.name,
       email: user.email,
       role: user.role,

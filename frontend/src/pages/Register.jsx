@@ -5,6 +5,7 @@ import api from "../services/api";
 
 const Register = () => {
   const [formData, setFormData] = useState({
+    username: "",
     name: "",
     email: "",
     password: "",
@@ -42,6 +43,18 @@ const Register = () => {
         <p className="text-sage text-sm mt-1 mb-6">Join DocTrack</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm text-dark font-medium mb-1">Username</label>
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
+              required
+            />
+          </div>
+
           <div>
             <label className="block text-sm text-dark font-medium mb-1">Name</label>
             <input

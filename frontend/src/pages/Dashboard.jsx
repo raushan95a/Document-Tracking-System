@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { MdInbox } from "react-icons/md";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import StatusBadge from "../components/StatusBadge";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
+import { getSocket } from "../services/socket";
+import { resetDashboardFilters, setDashboardFilters } from "../store/documentFiltersSlice";
 
 const formatDate = (dateString) =>
   new Date(dateString).toLocaleDateString("en-IN", {
@@ -17,27 +20,83 @@ const Dashboard = () => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const dispatch = useDispatch();
+  const filters = useSelector((state) => state.documentFilters.dashboard);
+  const { user, token } = useAuth();
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      setLoading(true);
+  const queryString = useMemo(() => {
+    const params = new URLSearchParams();
+
+    if (filters.search) {
+      params.set("search", filters.search);
+    }
+
+    if (filters.status) {
+      params.set("status", filters.status);
+    }
+
+    if (filters.department) {
+      params.set("department", filters.department);
+    }
+
+    return params.toString();
+  }, [filters.department, filters.search, filters.status]);
+
+  const fetchDocuments = useCallback(
+    async (showLoader = true) => {
+      if (showLoader) {
+        setLoading(true);
+      }
 
       try {
-        const response = await api.get("/documents");
+        const endpoint = queryString ? `/documents?${queryString}` : "/documents";
+        const response = await api.get(endpoint);
         setDocuments(response.data || []);
       } catch (error) {
         const message = error?.response?.data?.message || "Failed to fetch documents";
         toast.error(message);
       } finally {
-        setLoading(false);
+        if (showLoader) {
+          setLoading(false);
+        }
       }
+    },
+    [queryString]
+  );
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
+  useEffect(() => {
+    if (!token) {
+      return undefined;
+    }
+
+    const socket = getSocket(token);
+
+    if (!socket) {
+      return undefined;
+    }
+
+    const handleDocumentsUpdated = () => {
+      fetchDocuments(false);
     };
 
-    fetchDocuments();
-  }, []);
+    socket.on("documents:updated", handleDocumentsUpdated);
 
-  const title = user?.role === "employee" ? "My Documents" : "All Documents";
+    return () => {
+      socket.off("documents:updated", handleDocumentsUpdated);
+    };
+  }, [fetchDocuments, token]);
+
+  const titleMap = {
+    employee: "My Documents",
+    manager: "Pending Reviews",
+    admin: "All Documents",
+  };
+
+  const title = titleMap[user?.role] || "Documents";
 
   return (
     <div className="bg-cream min-h-full p-6">
@@ -50,6 +109,65 @@ const Dashboard = () => {
         >
           Upload Document
         </button>
+      </div>
+
+      <div className="bg-cream border border-sage/20 rounded-lg p-4 shadow-sm mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <input
+            type="text"
+            value={filters.search}
+            placeholder="Search title/description"
+            onChange={(event) =>
+              dispatch(
+                setDashboardFilters({
+                  search: event.target.value,
+                })
+              )
+            }
+            className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
+          />
+
+          <select
+            value={filters.status}
+            onChange={(event) =>
+              dispatch(
+                setDashboardFilters({
+                  status: event.target.value,
+                })
+              )
+            }
+            className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
+          >
+            <option value="">All Statuses</option>
+            <option value="Submitted">Submitted</option>
+            <option value="Under Review">Under Review</option>
+            <option value="Approved">Approved</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+
+          <input
+            type="text"
+            value={filters.department}
+            placeholder="Filter by department"
+            disabled={user?.role === "manager"}
+            onChange={(event) =>
+              dispatch(
+                setDashboardFilters({
+                  department: event.target.value,
+                })
+              )
+            }
+            className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm disabled:opacity-70"
+          />
+
+          <button
+            type="button"
+            onClick={() => dispatch(resetDashboardFilters())}
+            className="border border-sage text-sage px-4 py-2 rounded hover:bg-sage hover:text-cream text-sm"
+          >
+            Clear Filters
+          </button>
+        </div>
       </div>
 
       <div className="bg-cream border border-sage/20 rounded-lg overflow-hidden shadow-sm">

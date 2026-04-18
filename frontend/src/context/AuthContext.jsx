@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { disconnectSocket } from "../services/socket";
 
 export const AuthContext = createContext(null);
 
@@ -35,6 +36,7 @@ export const AuthProvider = ({ children }) => {
     setToken("");
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    disconnectSocket();
     navigate("/login");
   };
 

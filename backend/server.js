@@ -3,7 +3,9 @@ const path = require("path");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const multer = require("multer");
+const { createServer } = require("http");
 const connectDB = require("./config/db");
+const { initSocket } = require("./socket");
 
 dotenv.config();
 connectDB();
@@ -21,7 +23,10 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/documents", require("./routes/documentRoutes"));
+app.use("/api/workflow", require("./routes/workflowRoutes"));
+app.use("/api/logs", require("./routes/logRoutes"));
 
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
@@ -41,6 +46,9 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+const httpServer = createServer(app);
+initSocket(httpServer);
+
+httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

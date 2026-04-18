@@ -1,7 +1,27 @@
 import axios from "axios";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const normalizeApiBase = (value) => {
+  if (!value) {
+    return "/api";
+  }
+
+  const trimmed = value.trim();
+  return trimmed.endsWith("/") ? trimmed.slice(0, -1) : trimmed;
+};
+
+export const API_BASE_URL = normalizeApiBase(import.meta.env.VITE_API_BASE_URL || "/api");
+
+export const getServerBaseUrl = () => {
+  if (API_BASE_URL.startsWith("http://") || API_BASE_URL.startsWith("https://")) {
+    return API_BASE_URL.replace(/\/api$/, "");
+  }
+
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+
+  return "";
+};
 
 const api = axios.create({
   baseURL: API_BASE_URL,
