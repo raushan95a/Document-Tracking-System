@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const { normalizeDepartment } = require("../constants/departments");
 
 const getUsers = async (req, res) => {
   try {
@@ -51,7 +52,7 @@ const updateUser = async (req, res) => {
     }
 
     if (typeof department !== "undefined") {
-      user.department = department;
+      user.department = normalizeDepartment(department);
     }
 
     await user.save();

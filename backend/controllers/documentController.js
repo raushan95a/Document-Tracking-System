@@ -5,6 +5,7 @@ const Workflow = require("../models/Workflow");
 const DocumentLog = require("../models/DocumentLog");
 const User = require("../models/User");
 const { emitDocumentUpdate } = require("../socket");
+const { normalizeDepartment, isValidDepartment } = require("../constants/departments");
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -130,7 +131,7 @@ const createDocument = async (req, res) => {
       return res.status(400).json({ message: "File is required" });
     }
 
-    const resolvedDepartment = (department || req.user.department || "").trim();
+    const resolvedDepartment = normalizeDepartment(department || req.user.department || "");
 
     if (!resolvedDepartment) {
       return res.status(400).json({ message: "Department is required" });
@@ -262,11 +263,17 @@ const updateDocument = async (req, res) => {
         return res.status(403).json({ message: "Only manager/admin can change department" });
       }
 
-      document.department = department;
+      const normalizedDepartment = normalizeDepartment(department);
+
+      if (!isValidDepartment(normalizedDepartment)) {
+        return res.status(400).json({ message: "Invalid department" });
+      }
+
+      document.department = normalizedDepartment;
 
       const nextManager = await User.findOne({
         role: "manager",
-        department: buildDepartmentRegex(department),
+        department: buildDepartmentRegex(normalizedDepartment),
       }).select("_id");
 
       workflow.assignedTo = nextManager?._id || null;

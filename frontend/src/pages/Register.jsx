@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../services/api";
+import { DEPARTMENT_OPTIONS } from "../constants/departments";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -107,13 +108,20 @@ const Register = () => {
 
           <div>
             <label className="block text-sm text-dark font-medium mb-1">Department</label>
-            <input
-              type="text"
+            <select
               name="department"
               value={formData.department}
               onChange={handleChange}
-              className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
-            />
+              className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
+              required
+            >
+              <option value="">Select Department</option>
+              {DEPARTMENT_OPTIONS.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
           </div>
 
           <button

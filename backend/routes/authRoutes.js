@@ -8,6 +8,7 @@ const {
 } = require("../controllers/authController");
 const { protect, adminOnly } = require("../middleware/authMiddleware");
 const { handleValidationErrors } = require("../middleware/validation");
+const { DEPARTMENT_OPTIONS } = require("../constants/departments");
 
 const router = express.Router();
 
@@ -27,6 +28,12 @@ router.post(
       .optional()
       .isIn(["employee", "manager", "admin"])
       .withMessage("Invalid role"),
+    body("department")
+      .trim()
+      .notEmpty()
+      .withMessage("Department is required")
+      .isIn(DEPARTMENT_OPTIONS)
+      .withMessage("Invalid department"),
   ],
   handleValidationErrors,
   register

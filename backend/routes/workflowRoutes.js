@@ -6,6 +6,7 @@ const {
 } = require("../controllers/workflowController");
 const { protect, managerOrAdmin } = require("../middleware/authMiddleware");
 const { handleValidationErrors } = require("../middleware/validation");
+const { DEPARTMENT_OPTIONS } = require("../constants/departments");
 
 const router = express.Router();
 
@@ -29,8 +30,8 @@ router.put(
     body("assignedTo").optional({ nullable: true }).isMongoId().withMessage("Invalid assignee id"),
     body("targetDepartment")
       .optional({ nullable: true })
-      .isString()
-      .withMessage("Target department must be a string"),
+      .isIn(DEPARTMENT_OPTIONS)
+      .withMessage("Invalid target department"),
   ],
   handleValidationErrors,
   updateWorkflowStage

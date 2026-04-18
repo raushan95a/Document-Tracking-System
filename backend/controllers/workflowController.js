@@ -3,6 +3,7 @@ const Document = require("../models/Document");
 const DocumentLog = require("../models/DocumentLog");
 const User = require("../models/User");
 const { emitDocumentUpdate } = require("../socket");
+const { normalizeDepartment, isValidDepartment } = require("../constants/departments");
 
 const sameDepartment = (left, right) => {
   const a = (left || "").trim().toLowerCase();
@@ -107,11 +108,17 @@ const updateWorkflowStage = async (req, res) => {
     }
 
     if (action === "Forward") {
-      if (!targetDepartment || !targetDepartment.trim()) {
+      const normalizedTargetDepartment = normalizeDepartment(targetDepartment);
+
+      if (!normalizedTargetDepartment) {
         return res.status(400).json({ message: "targetDepartment is required for Forward" });
       }
 
-      document.department = targetDepartment.trim();
+      if (!isValidDepartment(normalizedTargetDepartment)) {
+        return res.status(400).json({ message: "Invalid target department" });
+      }
+
+      document.department = normalizedTargetDepartment;
       document.status = "Under Review";
       workflow.currentStage = "Under Review";
 
@@ -120,7 +127,7 @@ const updateWorkflowStage = async (req, res) => {
       } else {
         const nextManager = await User.findOne({
           role: "manager",
-          department: buildDepartmentRegex(targetDepartment.trim()),
+          department: buildDepartmentRegex(normalizedTargetDepartment),
         }).select("_id");
         workflow.assignedTo = nextManager?._id || null;
       }

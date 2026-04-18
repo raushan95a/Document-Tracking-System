@@ -5,6 +5,7 @@ import StatusBadge from "../components/StatusBadge";
 import { useAuth } from "../context/AuthContext";
 import api, { getServerBaseUrl } from "../services/api";
 import { getSocket } from "../services/socket";
+import { DEPARTMENT_OPTIONS } from "../constants/departments";
 
 const formatDate = (dateString) =>
   new Date(dateString).toLocaleDateString("en-IN", {
@@ -283,12 +284,19 @@ const DocumentDetail = () => {
 
             <div>
               <label className="block text-sm text-dark font-medium mb-1">Department</label>
-              <input
+              <select
                 value={department}
                 onChange={(event) => setDepartment(event.target.value)}
                 disabled={!canReview}
-                className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm disabled:opacity-70"
-              />
+                className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm disabled:opacity-70"
+              >
+                <option value="">Select Department</option>
+                {DEPARTMENT_OPTIONS.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -367,12 +375,19 @@ const DocumentDetail = () => {
             {action === "Forward" && (
               <div>
                 <label className="block text-sm text-dark font-medium mb-1">Target Department</label>
-                <input
+                <select
                   value={targetDepartment}
                   onChange={(event) => setTargetDepartment(event.target.value)}
-                  className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
+                  className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
                   required
-                />
+                >
+                  <option value="">Select Target Department</option>
+                  {DEPARTMENT_OPTIONS.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
           </div>

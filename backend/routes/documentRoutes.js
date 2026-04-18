@@ -11,6 +11,7 @@ const {
 const { protect } = require("../middleware/authMiddleware");
 const upload = require("../middleware/upload");
 const { handleValidationErrors } = require("../middleware/validation");
+const { DEPARTMENT_OPTIONS } = require("../constants/departments");
 
 const router = express.Router();
 
@@ -19,7 +20,13 @@ router.use(protect);
 router.post(
   "/",
   upload.single("file"),
-  [body("title").trim().notEmpty().withMessage("Title is required")],
+  [
+    body("title").trim().notEmpty().withMessage("Title is required"),
+    body("department")
+      .optional()
+      .isIn(DEPARTMENT_OPTIONS)
+      .withMessage("Invalid department"),
+  ],
   handleValidationErrors,
   createDocument
 );
@@ -28,7 +35,10 @@ router.get(
   "/",
   [
     query("search").optional().isString().withMessage("Search must be a string"),
-    query("department").optional().isString().withMessage("Department must be a string"),
+    query("department")
+      .optional()
+      .isIn(DEPARTMENT_OPTIONS)
+      .withMessage("Invalid department filter"),
     query("status")
       .optional()
       .isIn(["Submitted", "Under Review", "Approved", "Rejected"])
@@ -58,7 +68,7 @@ router.put(
     param("id").isMongoId().withMessage("Invalid document id"),
     body("title").optional().isString().withMessage("Title must be a string"),
     body("description").optional().isString().withMessage("Description must be a string"),
-    body("department").optional().isString().withMessage("Department must be a string"),
+    body("department").optional().isIn(DEPARTMENT_OPTIONS).withMessage("Invalid department"),
     body("remarks").optional().isString().withMessage("Remarks must be a string"),
   ],
   handleValidationErrors,

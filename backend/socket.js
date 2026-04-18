@@ -1,15 +1,12 @@
 const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
 const User = require("./models/User");
+const { normalizeDepartment: normalizeDepartmentValue } = require("./constants/departments");
 
 let ioInstance = null;
 
 const normalizeDepartment = (department) => {
-  if (!department || typeof department !== "string") {
-    return "";
-  }
-
-  return department.trim().toLowerCase();
+  return normalizeDepartmentValue(department).toLowerCase();
 };
 
 const initSocket = (httpServer) => {

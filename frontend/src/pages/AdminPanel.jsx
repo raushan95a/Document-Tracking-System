@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { getSocket } from "../services/socket";
 import { resetAdminFilters, setAdminFilters } from "../store/documentFiltersSlice";
+import { DEPARTMENT_OPTIONS } from "../constants/departments";
 
 const formatDate = (dateString) =>
   new Date(dateString).toLocaleDateString("en-IN", {
@@ -249,10 +250,8 @@ const AdminPanel = () => {
                 <option value="Rejected">Rejected</option>
               </select>
 
-              <input
-                type="text"
+              <select
                 value={filters.department}
-                placeholder="Filter by department"
                 onChange={(event) =>
                   dispatch(
                     setAdminFilters({
@@ -260,8 +259,15 @@ const AdminPanel = () => {
                     })
                   )
                 }
-                className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
-              />
+                className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
+              >
+                <option value="">All Departments</option>
+                {DEPARTMENT_OPTIONS.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
 
               <button
                 type="button"
@@ -362,13 +368,20 @@ const AdminPanel = () => {
                       </select>
                     </td>
                     <td className="px-4 py-3">
-                      <input
+                      <select
                         value={userEdits[item._id]?.department || ""}
                         onChange={(event) =>
                           handleUserFieldChange(item._id, "department", event.target.value)
                         }
-                        className="bg-cream border border-sage rounded px-2 py-1 text-darkest text-xs w-full"
-                      />
+                        className="appearance-none bg-cream border border-sage rounded px-2 py-1 text-darkest text-xs w-full"
+                      >
+                        <option value="">Select Department</option>
+                        {DEPARTMENT_OPTIONS.map((department) => (
+                          <option key={department} value={department}>
+                            {department}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">

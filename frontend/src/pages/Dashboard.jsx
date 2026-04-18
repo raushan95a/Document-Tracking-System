@@ -8,6 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { getSocket } from "../services/socket";
 import { resetDashboardFilters, setDashboardFilters } from "../store/documentFiltersSlice";
+import { DEPARTMENT_OPTIONS } from "../constants/departments";
 
 const formatDate = (dateString) =>
   new Date(dateString).toLocaleDateString("en-IN", {
@@ -151,10 +152,8 @@ const Dashboard = () => {
             <option value="Rejected">Rejected</option>
           </select>
 
-          <input
-            type="text"
+          <select
             value={filters.department}
-            placeholder="Filter by department"
             disabled={user?.role === "manager"}
             onChange={(event) =>
               dispatch(
@@ -163,8 +162,15 @@ const Dashboard = () => {
                 })
               )
             }
-            className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm disabled:opacity-70"
-          />
+            className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm disabled:opacity-70"
+          >
+            <option value="">All Departments</option>
+            {DEPARTMENT_OPTIONS.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
 
           <button
             type="button"

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const { DEPARTMENT_OPTIONS } = require("../constants/departments");
 
 const userSchema = new mongoose.Schema(
   {
@@ -34,6 +35,7 @@ const userSchema = new mongoose.Schema(
     },
     department: {
       type: String,
+      enum: ["", ...DEPARTMENT_OPTIONS],
       default: "",
       trim: true,
     },
