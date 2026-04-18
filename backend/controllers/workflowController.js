@@ -39,17 +39,37 @@ const buildDepartmentRegex = (department) => {
   return new RegExp(`^\\s*${(department || "").trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "i");
 };
 
+const isDocumentUploader = (user, document) => {
+  return getIdString(document?.uploadedBy) === getIdString(user?._id);
+};
+
+const isWorkflowAssignee = (user, workflow) => {
+  return getIdString(workflow?.assignedTo) === getIdString(user?._id);
+};
+
+const isDepartmentManagerForDocument = (user, document) => {
+  if (user?.role !== "manager" || !managerHasDepartment(user)) {
+    return false;
+  }
+
+  return sameDepartment(user.department, document?.department);
+};
+
 const hasDocumentAccess = (user, document, workflow) => {
   if (user.role === "admin") {
     return true;
   }
 
   if (user.role === "employee") {
-    return getIdString(document.uploadedBy) === getIdString(user._id);
+    return isDocumentUploader(user, document) || isWorkflowAssignee(user, workflow);
   }
 
   if (user.role === "manager") {
-    return true;
+    return (
+      isDocumentUploader(user, document) ||
+      isWorkflowAssignee(user, workflow) ||
+      isDepartmentManagerForDocument(user, document)
+    );
   }
 
   return false;
@@ -103,15 +123,35 @@ const updateWorkflowStage = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
+    const isAssigned = isWorkflowAssignee(req.user, workflow);
+    const isPrivileged =
+      req.user.role === "admin" || isDepartmentManagerForDocument(req.user, document);
+
+    if (!isPrivileged && !isAssigned) {
+      return res.status(403).json({ message: "You are not authorized to perform workflow actions" });
+    }
+
     if (typeof remarks !== "undefined") {
       document.remarks = remarks;
     }
 
     if (action === "Forward") {
-      const normalizedTargetDepartment = normalizeDepartment(targetDepartment);
+      let normalizedTargetDepartment = normalizeDepartment(targetDepartment);
+
+      if (assignedTo) {
+        const assignee = await User.findById(assignedTo).select("_id department");
+
+        if (!assignee) {
+          return res.status(404).json({ message: "Assigned user not found" });
+        }
+
+        normalizedTargetDepartment = normalizeDepartment(assignee.department);
+      }
 
       if (!normalizedTargetDepartment) {
-        return res.status(400).json({ message: "targetDepartment is required for Forward" });
+        return res
+          .status(400)
+          .json({ message: "A valid assignee or targetDepartment is required for Forward" });
       }
 
       if (!isValidDepartment(normalizedTargetDepartment)) {
@@ -122,8 +162,8 @@ const updateWorkflowStage = async (req, res) => {
       document.status = "Under Review";
       workflow.currentStage = "Under Review";
 
-      if (typeof assignedTo !== "undefined") {
-        workflow.assignedTo = assignedTo || null;
+      if (assignedTo) {
+        workflow.assignedTo = assignedTo;
       } else {
         const nextManager = await User.findOne({
           role: "manager",

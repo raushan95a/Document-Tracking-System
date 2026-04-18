@@ -39,12 +39,27 @@ const DocumentDetail = () => {
   const [savingMetadata, setSavingMetadata] = useState(false);
   const [submittingWorkflow, setSubmittingWorkflow] = useState(false);
 
-  const canReview = user?.role === "admin" || user?.role === "manager";
-  const isOwner =
-    user?.role === "employee" &&
-    document?.uploadedBy &&
-    document.uploadedBy._id?.toString() === user._id?.toString();
-  const canEditMetadata = canReview || isOwner;
+  const isAssignedToMe = useMemo(() => {
+    if (!document?.workflow?.assignedTo || !user?._id) return false;
+    const assignedId =
+      typeof document.workflow.assignedTo === "string"
+        ? document.workflow.assignedTo
+        : document.workflow.assignedTo._id;
+    return assignedId?.toString() === user._id?.toString();
+  }, [document, user]);
+
+  const isUploader = useMemo(() => {
+    if (!document?.uploadedBy || !user?._id) return false;
+    const uploaderId =
+      typeof document.uploadedBy === "string"
+        ? document.uploadedBy
+        : document.uploadedBy._id;
+    return uploaderId?.toString() === user._id?.toString();
+  }, [document, user]);
+
+  const canManageWorkflow = user?.role === "admin" || user?.role === "manager" || isAssignedToMe;
+  const canAccessActions = canManageWorkflow && !isUploader;
+  const canEditMetadata = canAccessActions;
 
   const assigneeDisplay = useMemo(() => {
     const assignee = document?.workflow?.assignedTo;
@@ -77,7 +92,11 @@ const DocumentDetail = () => {
             : assignedValue._id
           : ""
       );
-      setTargetDepartment(data.department || "");
+      const assignedDepartment =
+        typeof assignedValue === "object" && assignedValue?.department
+          ? assignedValue.department
+          : "";
+      setTargetDepartment(assignedDepartment || data.department || "");
     } catch (error) {
       const message = error?.response?.data?.message || "Failed to fetch document";
       toast.error(message);
@@ -101,7 +120,7 @@ const DocumentDetail = () => {
   }, [id]);
 
   const fetchAssignableUsers = useCallback(async () => {
-    if (!canReview) {
+    if (!canManageWorkflow) {
       return;
     }
 
@@ -116,7 +135,7 @@ const DocumentDetail = () => {
     } finally {
       setLoadingUsers(false);
     }
-  }, [canReview]);
+  }, [canManageWorkflow]);
 
   useEffect(() => {
     fetchDocument();
@@ -163,7 +182,7 @@ const DocumentDetail = () => {
       formData.append("title", title);
       formData.append("description", description);
       formData.append("remarks", remarks);
-      if (canReview && department) {
+      if ((user?.role === "admin" || user?.role === "manager") && department) {
         formData.append("department", department);
       }
       if (newFile) {
@@ -299,7 +318,7 @@ const DocumentDetail = () => {
               <select
                 value={department}
                 onChange={(event) => setDepartment(event.target.value)}
-                disabled={!canReview}
+                disabled={!(user?.role === "admin" || user?.role === "manager")}
                 className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm disabled:opacity-70"
               >
                 <option value="">Select Department</option>
@@ -353,7 +372,7 @@ const DocumentDetail = () => {
         </form>
       )}
 
-      {canReview && (
+      {canAccessActions && (
         <form
           onSubmit={handleWorkflowSubmit}
           className="mt-6 bg-cream border border-sage/20 rounded-lg p-6 shadow-sm"
@@ -382,18 +401,17 @@ const DocumentDetail = () => {
                   onChange={(event) => {
                     const val = event.target.value;
                     setAssignedTo(val);
-                    
-                    const selectedUser = users.find(u => u._id === val);
-                    if (selectedUser && selectedUser.department) {
-                      setTargetDepartment(selectedUser.department);
-                    }
+
+                    const selectedUser = users.find((item) => item._id === val);
+                    setTargetDepartment(selectedUser?.department || "");
                   }}
                   className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
+                  required
                 >
-                  <option value="">Unassigned</option>
+                  <option value="">Select Assignee</option>
                   {users.map((item) => (
                     <option key={item._id} value={item._id}>
-                      {item.name} ({item.role})
+                      {item.name} ({item.role}){item.department ? ` - ${item.department}` : ""}
                     </option>
                   ))}
                 </select>
@@ -408,19 +426,14 @@ const DocumentDetail = () => {
             {action === "Forward" && (
               <div>
                 <label className="block text-sm text-dark font-medium mb-1">Target Department</label>
-                <select
+                <input
+                  type="text"
                   value={targetDepartment}
-                  onChange={(event) => setTargetDepartment(event.target.value)}
-                  className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
+                  readOnly
+                  placeholder="Select assignee first"
+                  className="w-full bg-sage/10 border border-sage rounded px-3 py-2 text-darkest focus:outline-none text-sm cursor-not-allowed"
                   required
-                >
-                  <option value="">Select Target Department</option>
-                  {DEPARTMENT_OPTIONS.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
             )}
           </div>

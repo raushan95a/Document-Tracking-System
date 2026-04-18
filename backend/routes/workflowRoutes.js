@@ -4,7 +4,7 @@ const {
   getWorkflowByDocumentId,
   updateWorkflowStage,
 } = require("../controllers/workflowController");
-const { protect, managerOrAdmin } = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 const { handleValidationErrors } = require("../middleware/validation");
 const { DEPARTMENT_OPTIONS } = require("../constants/departments");
 
@@ -21,7 +21,6 @@ router.get(
 router.put(
   "/:documentId",
   protect,
-  managerOrAdmin,
   [
     param("documentId").isMongoId().withMessage("Invalid document id"),
     body("action")

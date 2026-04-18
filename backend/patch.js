@@ -1,0 +1,1 @@
+const fs=require("fs"); let f=fs.readFileSync("./controllers/documentController.js", "utf8"); f=f.replace(/Workflow.find...assignedTo: user._id.../g, "Workflow.find({ assignedTo: user._id.toString() })"); f=f.replace(/uploadedBy: user._id/g, "uploadedBy: user._id.toString()"); fs.writeFileSync("./controllers/documentController.js", f);

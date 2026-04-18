@@ -13,7 +13,7 @@ const { DEPARTMENT_OPTIONS } = require("../constants/departments");
 
 const router = express.Router();
 
-router.get("/assignable", protect, managerOrAdmin, getAssignableUsers);
+router.get("/assignable", protect, getAssignableUsers);
 
 router.get("/", protect, adminOnly, getUsers);
 

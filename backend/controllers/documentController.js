@@ -43,40 +43,90 @@ const getIdString = (value) => {
   return "";
 };
 
+const isDocumentUploader = (user, document) => {
+  return getIdString(document?.uploadedBy) === getIdString(user?._id);
+};
+
+const isWorkflowAssignee = (user, workflow) => {
+  return getIdString(workflow?.assignedTo) === getIdString(user?._id);
+};
+
+const isDepartmentManagerForDocument = (user, document) => {
+  if (user?.role !== "manager" || !managerHasDepartment(user)) {
+    return false;
+  }
+
+  return sameDepartment(user.department, document?.department);
+};
+
 const hasDocumentAccess = (user, document, workflow) => {
   if (user.role === "admin") {
     return true;
   }
 
   if (user.role === "employee") {
-    return getIdString(document.uploadedBy) === getIdString(user._id);
+    return isDocumentUploader(user, document) || isWorkflowAssignee(user, workflow);
   }
 
   if (user.role === "manager") {
-    return true;
+    return (
+      isDocumentUploader(user, document) ||
+      isWorkflowAssignee(user, workflow) ||
+      isDepartmentManagerForDocument(user, document)
+    );
   }
 
   return false;
 };
 
-const getVisibilityQuery = (user, filters) => {
+const getVisibilityQuery = async (user, filters) => {
   const query = {};
 
   if (user.role === "employee") {
-    query.uploadedBy = user._id;
+    const assignedWorkflows = await Workflow.find({ assignedTo: user._id });
+    const assignedDocIds = assignedWorkflows.map((w) => w.documentId);
+    query.$or = [
+      { uploadedBy: user._id },
+      { _id: { $in: assignedDocIds } },
+    ];
+  } else if (user.role === "manager") {
+    const assignedWorkflows = await Workflow.find({ assignedTo: user._id });
+    const assignedDocIds = assignedWorkflows.map((w) => w.documentId);
+    const managerConditions = [{ uploadedBy: user._id }, { _id: { $in: assignedDocIds } }];
+
+    if (managerHasDepartment(user)) {
+      managerConditions.push({ department: buildDepartmentRegex(user.department) });
+    }
+
+    query.$or = managerConditions;
   }
+
+  const andConditions = [];
 
   if (filters.status) {
-    query.status = filters.status;
+    andConditions.push({ status: filters.status });
   }
 
-  if (filters.department) {
-    query.department = new RegExp(`^${escapeRegex(filters.department.trim())}$`, "i");
+  if (filters.department && user.role !== "manager") {
+    andConditions.push({
+      department: new RegExp(`^${escapeRegex(filters.department.trim())}$`, "i"),
+    });
   }
 
   if (filters.search) {
     const regex = new RegExp(escapeRegex(filters.search.trim()), "i");
-    query.$or = [{ title: regex }, { description: regex }];
+    andConditions.push({
+      $or: [{ title: regex }, { description: regex }],
+    });
+  }
+
+  if (andConditions.length > 0) {
+    if (query.$or) {
+      query.$and = [{ $or: query.$or }, ...andConditions];
+      delete query.$or;
+    } else {
+      query.$and = andConditions;
+    }
   }
 
   return query;
@@ -183,7 +233,7 @@ const getDocuments = async (req, res) => {
       department: req.query.department,
     };
 
-    const query = getVisibilityQuery(req.user, filters);
+    const query = await getVisibilityQuery(req.user, filters);
 
     const documents = await Document.find(query)
       .populate("uploadedBy", "name username email role department")
@@ -239,10 +289,12 @@ const updateDocument = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    const isOwner = document.uploadedBy.toString() === req.user._id.toString();
-    const isPrivileged = req.user.role === "admin" || req.user.role === "manager";
+    const isOwner = isDocumentUploader(req.user, document);
+    const isPrivileged =
+      req.user.role === "admin" || isDepartmentManagerForDocument(req.user, document);
+    const isAssigned = isWorkflowAssignee(req.user, workflow);
 
-    if (!isPrivileged && !isOwner) {
+    if (!isPrivileged && !isOwner && !isAssigned) {
       return res.status(403).json({ message: "Access denied" });
     }
 
@@ -271,7 +323,7 @@ const updateDocument = async (req, res) => {
     }
 
     if (typeof department !== "undefined") {
-      if (!isPrivileged) {
+      if (!isPrivileged && !isAssigned) {
         return res.status(403).json({ message: "Only manager/admin can change department" });
       }
 
