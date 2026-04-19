@@ -79,6 +79,32 @@ const hasDocumentAccess = (user, document, workflow) => {
   return false;
 };
 
+const hasHistoricalWorkflowAccess = async (user, documentId) => {
+  if (!user?._id || !documentId) {
+    return false;
+  }
+
+  const priorAction = await DocumentLog.findOne({
+    documentId,
+    updatedBy: user._id,
+    action: { $in: ["Upload", "Forward", "Approve", "Reject"] },
+  }).select("_id");
+
+  return Boolean(priorAction);
+};
+
+const canReadDocument = async (user, document, workflow) => {
+  if (hasDocumentAccess(user, document, workflow)) {
+    return true;
+  }
+
+  if (user.role === "employee") {
+    return hasHistoricalWorkflowAccess(user, document._id);
+  }
+
+  return false;
+};
+
 const getVisibilityQuery = async (user, filters) => {
   const query = {};
 
@@ -257,7 +283,7 @@ const getDocumentById = async (req, res) => {
       return res.status(404).json({ message: "Document not found" });
     }
 
-    if (!hasDocumentAccess(req.user, document, workflow)) {
+    if (!(await canReadDocument(req.user, document, workflow))) {
       return res.status(403).json({ message: "Access denied" });
     }
 
@@ -424,7 +450,7 @@ const getDocumentLogs = async (req, res) => {
 
     const workflow = await Workflow.findOne({ documentId: docId });
 
-    if (!hasDocumentAccess(req.user, document, workflow)) {
+    if (!(await canReadDocument(req.user, document, workflow))) {
       return res.status(403).json({ message: "Access denied" });
     }
 
