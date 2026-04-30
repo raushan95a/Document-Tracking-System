@@ -6,7 +6,6 @@ import { toast } from "react-toastify";
 import StatusBadge from "../components/StatusBadge";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
-import { getSocket } from "../services/socket";
 import { resetDashboardFilters, setDashboardFilters } from "../store/documentFiltersSlice";
 import { DEPARTMENT_OPTIONS } from "../constants/departments";
 
@@ -38,7 +37,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const filters = useSelector((state) => state.documentFilters.dashboard);
-  const { user, token } = useAuth();
+  const { user } = useAuth();
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
@@ -69,15 +68,6 @@ const Dashboard = () => {
   );
 
   useEffect(() => { fetchDocuments(); }, [fetchDocuments]);
-
-  useEffect(() => {
-    if (!token) return undefined;
-    const socket = getSocket(token);
-    if (!socket) return undefined;
-    const handler = () => fetchDocuments(false);
-    socket.on("documents:updated", handler);
-    return () => socket.off("documents:updated", handler);
-  }, [fetchDocuments, token]);
 
   const titleMap = { employee: "My Documents", manager: "Pending Reviews", admin: "All Documents" };
   const title = titleMap[user?.role] || "Documents";

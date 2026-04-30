@@ -5,7 +5,6 @@ import { MdArrowBack, MdOpenInNew } from "react-icons/md";
 import StatusBadge from "../components/StatusBadge";
 import { useAuth } from "../context/AuthContext";
 import api, { getServerBaseUrl } from "../services/api";
-import { getSocket } from "../services/socket";
 import { DEPARTMENT_OPTIONS } from "../constants/departments";
 
 const formatDate = (s) =>
@@ -40,7 +39,7 @@ const fo = (e) => (e.target.style.borderColor = "#e5e7eb");
 const DocumentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, token } = useAuth();
+  const { user } = useAuth();
 
   const [document, setDocument] = useState(null);
   const [logs, setLogs] = useState([]);
@@ -112,16 +111,6 @@ const DocumentDetail = () => {
   }, [canManageWorkflow]);
 
   useEffect(() => { fetchDocument(); fetchLogs(); fetchAssignableUsers(); }, [fetchAssignableUsers, fetchDocument, fetchLogs]);
-
-  useEffect(() => {
-    if (!token) return undefined;
-    const socket = getSocket(token);
-    if (!socket) return undefined;
-    socket.emit("document:subscribe", id);
-    const handler = (payload) => { if (payload?.documentId !== id) return; fetchDocument(); fetchLogs(); };
-    socket.on("document:updated", handler);
-    return () => { socket.emit("document:unsubscribe", id); socket.off("document:updated", handler); };
-  }, [fetchDocument, fetchLogs, id, token]);
 
   const handleMetadataUpdate = async (e) => {
     e.preventDefault(); setSavingMetadata(true);

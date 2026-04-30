@@ -483,7 +483,7 @@ const Landing = () => {
               {
                 name: "Employee",
                 desc: "Upload documents and track their status through the approval pipeline.",
-                features: ["Upload documents", "Track status in real-time", "View document history", "AI-powered assistant"],
+                features: ["Upload documents", "Track document status", "View document history", "AI-powered assistant"],
                 featured: false,
               },
               {

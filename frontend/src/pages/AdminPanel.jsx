@@ -3,9 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import StatusBadge from "../components/StatusBadge";
-import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
-import { getSocket } from "../services/socket";
 import { resetAdminFilters, setAdminFilters } from "../store/documentFiltersSlice";
 import { DEPARTMENT_OPTIONS } from "../constants/departments";
 
@@ -38,7 +36,6 @@ const AdminPanel = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const dispatch = useDispatch();
   const filters = useSelector((s) => s.documentFilters.admin);
-  const { token } = useAuth();
   const navigate = useNavigate();
 
   const queryString = useMemo(() => {
@@ -70,15 +67,6 @@ const AdminPanel = () => {
   };
 
   useEffect(() => { if (activeTab === "documents") fetchDocuments(); else fetchUsers(); }, [activeTab, fetchDocuments]);
-
-  useEffect(() => {
-    if (!token || activeTab !== "documents") return undefined;
-    const socket = getSocket(token);
-    if (!socket) return undefined;
-    const h = () => fetchDocuments(false);
-    socket.on("documents:updated", h);
-    return () => socket.off("documents:updated", h);
-  }, [activeTab, fetchDocuments, token]);
 
   const handleUserFieldChange = (uid, key, val) =>
     setUserEdits((p) => ({ ...p, [uid]: { ...(p[uid] || {}), [key]: val } }));

@@ -5,7 +5,6 @@ const Document = require("../models/Document");
 const Workflow = require("../models/Workflow");
 const DocumentLog = require("../models/DocumentLog");
 const User = require("../models/User");
-const { emitDocumentUpdate } = require("../socket");
 const { normalizeDepartment, isValidDepartment } = require("../constants/departments");
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -263,8 +262,6 @@ const createDocument = async (req, res) => {
       action: "Upload",
     });
 
-    emitDocumentUpdate({ document, workflow, action: "Upload" });
-
     const response = document.toObject();
     response.workflow = workflow;
 
@@ -419,8 +416,6 @@ const updateDocument = async (req, res) => {
     await document.save();
     await workflow.save();
 
-    emitDocumentUpdate({ document, workflow, action: "metadata-updated" });
-
     const populatedDocument = await Document.findById(id).populate(
       "uploadedBy",
       "name username email role department"
@@ -474,17 +469,6 @@ const deleteDocument = async (req, res) => {
     await Workflow.deleteMany({ documentId: id });
     await DocumentLog.deleteMany({ documentId: id });
     await document.deleteOne();
-
-    emitDocumentUpdate({
-      document: {
-        _id: id,
-        uploadedBy: document.uploadedBy,
-        department: document.department,
-        status: "Deleted",
-      },
-      workflow: null,
-      action: "deleted",
-    });
 
     return res.status(200).json({ message: "Document deleted successfully" });
   } catch (error) {

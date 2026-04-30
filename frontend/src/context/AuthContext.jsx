@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
-import { disconnectSocket } from "../services/socket";
 
 export const AuthContext = createContext(null);
 
@@ -55,7 +54,6 @@ export const AuthProvider = ({ children }) => {
         setToken("");
         localStorage.removeItem("user");
         localStorage.removeItem("token");
-        disconnectSocket();
       } finally {
         if (isMounted) {
           setIsAuthLoading(false);
@@ -84,7 +82,6 @@ export const AuthProvider = ({ children }) => {
     setIsAuthLoading(false);
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-    disconnectSocket();
     navigate("/login");
   };
 

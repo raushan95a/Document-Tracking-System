@@ -131,11 +131,11 @@ Remarks are stored on the `Document` record.
 
 This means the latest submitted remark is kept on the document itself.
 
-## 6. Real-Time Updates
+## 6. Data Refresh
 
-Whenever a document is uploaded, updated, forwarded, approved, rejected, or deleted, the backend emits a socket event.
+Whenever a document is uploaded, updated, forwarded, approved, rejected, or deleted, the backend updates the document, workflow, and log records through REST endpoints.
 
-The document detail page listens for these events and refreshes:
+The document detail page refreshes after user actions and reloads:
 
 - document data
 - document history
@@ -156,7 +156,7 @@ The document detail page shows this history in the `Document History` table.
 ## Mermaid Workflow Diagram
 
 ```mermaid
-flowchart LR
+flowchart TD
   A["User uploads document"] --> B["Document created"]
   B --> C["Workflow created<br/>Stage: Submitted"]
   C --> D["Assign to department manager<br/>(if available)"]
@@ -178,7 +178,7 @@ flowchart LR
   H -->|"Reject"| P["Status: Rejected<br/>Workflow stage: Rejected"]
   P --> Q["Create log: Reject"]
 
-  M --> R["Socket event emitted"]
+  M --> R["Data saved through REST API"]
   O --> R
   Q --> R
   R --> S["UI refreshes document and history"]

@@ -3,7 +3,6 @@ const Document = require("../models/Document");
 const DocumentLog = require("../models/DocumentLog");
 const User = require("../models/User");
 const { sendEmail } = require("../config/mail");
-const { emitDocumentUpdate } = require("../socket");
 const { normalizeDepartment, isValidDepartment } = require("../constants/departments");
 
 const sameDepartment = (left, right) => {
@@ -245,8 +244,6 @@ const updateWorkflowStage = async (req, res) => {
     } catch (mailError) {
       console.error("Mail notification logic error:", mailError);
     }
-
-    emitDocumentUpdate({ document, workflow, action });
 
     const populatedWorkflow = await Workflow.findOne({ documentId }).populate(
       "assignedTo",
