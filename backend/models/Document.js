@@ -17,6 +17,10 @@ const documentSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    cloudinaryPublicId: {
+      type: String,
+      default: "",
+    },
     uploadedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

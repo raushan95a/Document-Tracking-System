@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const cloudinary = require("../config/cloudinary");
 const Document = require("../models/Document");
 const Workflow = require("../models/Workflow");
 const DocumentLog = require("../models/DocumentLog");
@@ -210,16 +211,38 @@ const createDocument = async (req, res) => {
     const resolvedDepartment = normalizeDepartment(department || req.user.department || "");
 
     if (!resolvedDepartment) {
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
       return res.status(400).json({ message: "Department is required" });
     }
 
-    const fileUrl = `/uploads/${req.file.filename}`;
+    let fileUrl = "";
+    let cloudinaryPublicId = "";
+    try {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        resource_type: "auto",
+        folder: "document_tracking",
+      });
+      fileUrl = result.secure_url;
+      cloudinaryPublicId = result.public_id;
+      
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+    } catch (error) {
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(500).json({ message: "Error uploading to Cloudinary: " + error.message });
+    }
 
     const document = await Document.create({
       title,
       description,
       department: resolvedDepartment,
       fileUrl,
+      cloudinaryPublicId,
       uploadedBy: req.user._id,
     });
 
@@ -325,7 +348,14 @@ const updateDocument = async (req, res) => {
     }
 
     if (req.file) {
-      if (document.fileUrl) {
+      if (document.cloudinaryPublicId) {
+        try {
+          await cloudinary.uploader.destroy(document.cloudinaryPublicId);
+          await cloudinary.uploader.destroy(document.cloudinaryPublicId, { resource_type: "raw" });
+        } catch (err) {
+          console.error("Cloudinary delete error", err);
+        }
+      } else if (document.fileUrl && document.fileUrl.startsWith("/uploads/")) {
         const relativePath = document.fileUrl.replace(/^\//, "");
         const filePath = path.join(__dirname, "..", relativePath);
 
@@ -333,7 +363,24 @@ const updateDocument = async (req, res) => {
           fs.unlinkSync(filePath);
         }
       }
-      document.fileUrl = `/uploads/${req.file.filename}`;
+
+      try {
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          resource_type: "auto",
+          folder: "document_tracking",
+        });
+        document.fileUrl = result.secure_url;
+        document.cloudinaryPublicId = result.public_id;
+        
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+      } catch (error) {
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        return res.status(500).json({ message: "Error uploading to Cloudinary: " + error.message });
+      }
     }
 
     if (typeof title !== "undefined") {
@@ -408,7 +455,14 @@ const deleteDocument = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    if (document.fileUrl) {
+    if (document.cloudinaryPublicId) {
+      try {
+        await cloudinary.uploader.destroy(document.cloudinaryPublicId);
+        await cloudinary.uploader.destroy(document.cloudinaryPublicId, { resource_type: "raw" });
+      } catch (err) {
+        console.error("Cloudinary delete error", err);
+      }
+    } else if (document.fileUrl && document.fileUrl.startsWith("/uploads/")) {
       const relativePath = document.fileUrl.replace(/^\//, "");
       const filePath = path.join(__dirname, "..", relativePath);
 

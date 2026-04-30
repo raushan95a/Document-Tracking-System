@@ -193,20 +193,7 @@ const Landing = () => {
       </div>
 
       {/* subtle radial glow */}
-      <div
-        style={{
-          position: "absolute",
-          top: "30%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: 800,
-          height: 600,
-          background:
-            "radial-gradient(ellipse, rgba(125,255,107,0.07) 0%, transparent 70%)",
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      />
+
 
       {/* ── NAV ── */}
       <nav
@@ -226,7 +213,7 @@ const Landing = () => {
               width: 32,
               height: 32,
               borderRadius: 8,
-              background: "linear-gradient(135deg,#7DFF6B 0%,#3dcf2b 100%)",
+              background: "#7DFF6B",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -416,7 +403,7 @@ const Landing = () => {
             {/* pricing card */}
             <div
               style={{
-                background: "linear-gradient(160deg,#c8ff6b 0%,#7DFF6B 60%,#5de64a 100%)",
+                background: "#7DFF6B",
                 borderRadius: 16,
                 padding: "24px 24px 20px",
                 color: "#0d0f0c",
