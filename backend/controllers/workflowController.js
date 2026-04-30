@@ -2,6 +2,7 @@ const Workflow = require("../models/Workflow");
 const Document = require("../models/Document");
 const DocumentLog = require("../models/DocumentLog");
 const User = require("../models/User");
+const { sendEmail } = require("../config/mail");
 const { emitDocumentUpdate } = require("../socket");
 const { normalizeDepartment, isValidDepartment } = require("../constants/departments");
 
@@ -199,6 +200,51 @@ const updateWorkflowStage = async (req, res) => {
       updatedBy: req.user._id,
       action,
     });
+
+    // Send email notifications
+    try {
+      const uploader = await User.findById(document.uploadedBy);
+      const assignee = workflow.assignedTo ? await User.findById(workflow.assignedTo) : null;
+
+      if (uploader && uploader.email) {
+        let subject = `Document Status Updated: ${document.title}`;
+        let statusText = action === "Forward" ? "Forwarded" : action;
+        let html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+            <h2 style="color: #4CAF50;">Document Status Update</h2>
+            <p>Hello <strong>${uploader.name}</strong>,</p>
+            <p>The status of your document "<strong>${document.title}</strong>" has been updated to <strong>${statusText}</strong>.</p>
+            <p><strong>Current Stage:</strong> ${workflow.currentStage}</p>
+            <p><strong>Remarks:</strong> ${remarks || "No remarks"}</p>
+            <br/>
+            <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/documents/${document._id}" 
+               style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Document</a>
+            <p style="margin-top: 20px; font-size: 12px; color: #777;">This is an automated notification. Please do not reply to this email.</p>
+          </div>
+        `;
+        sendEmail(uploader.email, subject, html).catch((err) => console.error("Uploader email failed", err));
+      }
+
+      if (action === "Forward" && assignee && assignee.email) {
+        let subject = `New Document Assigned: ${document.title}`;
+        let html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+            <h2 style="color: #2196F3;">New Document Assignment</h2>
+            <p>Hello <strong>${assignee.name}</strong>,</p>
+            <p>A document "<strong>${document.title}</strong>" has been forwarded to you for review.</p>
+            <p><strong>Uploader:</strong> ${uploader?.name || "Unknown"}</p>
+            <p><strong>Remarks:</strong> ${remarks || "No remarks"}</p>
+            <br/>
+            <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/documents/${document._id}" 
+               style="background-color: #2196F3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Review Document</a>
+            <p style="margin-top: 20px; font-size: 12px; color: #777;">This is an automated notification. Please do not reply to this email.</p>
+          </div>
+        `;
+        sendEmail(assignee.email, subject, html).catch((err) => console.error("Assignee email failed", err));
+      }
+    } catch (mailError) {
+      console.error("Mail notification logic error:", mailError);
+    }
 
     emitDocumentUpdate({ document, workflow, action });
 

@@ -1,9 +1,30 @@
 import React from "react";
-import { MdDescription } from "react-icons/md";
+import { MdDescription, MdQrCode } from "react-icons/md";
+import { useLocation } from "react-router-dom";
+import { QRCodeCanvas } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const location = useLocation();
+  const [showQR, setShowQR] = React.useState(false);
+
+  const isDocDetail = location.pathname.startsWith("/documents/");
+  const docId = isDocDetail ? location.pathname.split("/").pop() : null;
+  const currentUrl = window.location.href;
+
+  const downloadQR = () => {
+    const canvas = document.getElementById("qr-canvas");
+    if (canvas) {
+      const url = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `document-qr-${docId}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
   const roleColor = {
     admin: { bg: "rgba(125,255,107,0.15)", color: "#7DFF6B", border: "rgba(125,255,107,0.3)" },
@@ -62,6 +83,85 @@ const Navbar = () => {
         >
           {user?.role || "employee"}
         </span>
+
+        {isDocDetail && (
+          <div style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => setShowQR(!showQR)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                color: "#7DFF6B",
+                background: "rgba(125,255,107,0.1)",
+                border: "1px solid rgba(125,255,107,0.3)",
+                borderRadius: 7,
+                padding: "5px 12px",
+                fontSize: 13,
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(125,255,107,0.2)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(125,255,107,0.1)";
+              }}
+            >
+              <MdQrCode style={{ fontSize: 16 }} />
+              QR Code
+            </button>
+
+            {showQR && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 45,
+                  right: 0,
+                  background: "#111210",
+                  border: "1px solid rgba(125,255,107,0.2)",
+                  borderRadius: 12,
+                  padding: 20,
+                  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5)",
+                  zIndex: 100,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 15,
+                  width: 200,
+                }}
+              >
+                <div style={{ background: "white", padding: 10, borderRadius: 8 }}>
+                  <QRCodeCanvas
+                    id="qr-canvas"
+                    value={currentUrl}
+                    size={160}
+                    level={"H"}
+                    includeMargin={false}
+                  />
+                </div>
+                <button
+                  onClick={downloadQR}
+                  style={{
+                    width: "100%",
+                    background: "#7DFF6B",
+                    color: "#0d0f0c",
+                    border: "none",
+                    borderRadius: 6,
+                    padding: "8px 0",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  Download PNG
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         <button
           type="button"
           onClick={logout}
