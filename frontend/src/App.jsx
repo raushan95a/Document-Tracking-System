@@ -13,6 +13,8 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import UploadDocument from "./pages/UploadDocument";
+import Chatbot from "./components/Chatbot";
+
 
 const Layout = ({ children }) => {
   return (
@@ -21,7 +23,9 @@ const Layout = ({ children }) => {
       <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
         <Navbar />
         <main style={{ background: "#0d0f0c", overflowY: "auto", paddingTop: 56, paddingLeft: 224, minHeight: "100vh" }}>{children}</main>
+        <Chatbot />
       </div>
+
     </div>
   );
 };
