@@ -112,8 +112,12 @@ const App = () => {
       <AuthProvider>
         <ToastContainer
           position="bottom-right"
-          theme="light"
-          toastStyle={{ fontFamily: "'Inter', sans-serif", fontSize: 14, borderRadius: 8 }}
+          autoClose={3500}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          pauseOnHover
+          draggable={false}
         />
         <AppRoutes />
       </AuthProvider>
