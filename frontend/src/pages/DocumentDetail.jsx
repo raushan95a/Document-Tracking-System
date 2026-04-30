@@ -168,7 +168,7 @@ const DocumentDetail = () => {
           {document.fileUrl && (
             <div>
               <p style={{ color: "#697565", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>File</p>
-              <a href={`${getServerBaseUrl()}${document.fileUrl}`} target="_blank" rel="noreferrer" style={{ color: "#7DFF6B", fontSize: 13, textDecoration: "underline" }}>View File</a>
+              <a href={document.fileUrl.startsWith("http") ? document.fileUrl : `${getServerBaseUrl()}${document.fileUrl}`} target="_blank" rel="noreferrer" style={{ color: "#7DFF6B", fontSize: 13, textDecoration: "underline" }}>View File</a>
             </div>
           )}
         </div>
