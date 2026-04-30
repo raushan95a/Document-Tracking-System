@@ -11,7 +11,7 @@ const seedAdmin = async () => {
   try {
     await connectDB();
 
-    const adminEmail = process.env.ADMIN_EMAIL || "admin@doctrack.com";
+    const adminEmail = process.env.ADMIN_EMAIL || "jayeshkr152005@gmail.com";
     // We assume the model hashes the password. If it uses pre("save"), create triggers it
     const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
     const adminUsername = process.env.ADMIN_USERNAME || "system_admin";
