@@ -22,6 +22,8 @@ const inputStyle = {
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [showOTP, setShowOTP] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -30,10 +32,26 @@ const Login = () => {
     event.preventDefault();
     setLoading(true);
     try {
-      const response = await api.post("/auth/login", { email, password });
-      const { token, ...userData } = response.data;
-      login(userData, token);
-      navigate("/dashboard");
+      if (!showOTP) {
+        // Step 1: Initial Login
+        const response = await api.post("/auth/login", { email, password });
+        if (response.data.otpRequired) {
+          setShowOTP(true);
+          toast.success("OTP sent to your email!");
+        } else {
+          // Fallback if OTP is not enabled for some reason
+          const { token, ...userData } = response.data;
+          login(userData, token);
+          navigate("/dashboard");
+        }
+      } else {
+        // Step 2: OTP Verification
+        const response = await api.post("/auth/verify-otp", { email, otp });
+        const { token, ...userData } = response.data;
+        login(userData, token);
+        toast.success("Login successful!");
+        navigate("/dashboard");
+      }
     } catch (error) {
       const message = error?.response?.data?.message || "Login failed";
       toast.error(message);
@@ -85,67 +103,104 @@ const Login = () => {
             Welcome back
           </h1>
           <p style={{ color: "#697565", fontSize: 13, marginBottom: 28 }}>
-            Sign in to your DocTrack account
+            {showOTP ? "Please enter the 6-digit code sent to your email" : "Sign in to your DocTrack account"}
           </p>
 
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ color: "#a8b5a4", fontSize: 12, fontWeight: 600, display: "block", marginBottom: 6 }}>
-                EMAIL
-              </label>
-              <div style={{ position: "relative" }}>
-                <MdMailOutline
-                  style={{
-                    position: "absolute",
-                    left: 11,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "#697565",
-                    fontSize: 16,
-                    pointerEvents: "none",
-                  }}
-                />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  style={{ ...inputStyle, paddingLeft: 34 }}
-                  placeholder="you@example.com"
-                  required
-                  onFocus={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.45)")}
-                  onBlur={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.15)")}
-                />
-              </div>
-            </div>
+            {!showOTP ? (
+              <>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ color: "#a8b5a4", fontSize: 12, fontWeight: 600, display: "block", marginBottom: 6 }}>
+                    EMAIL
+                  </label>
+                  <div style={{ position: "relative" }}>
+                    <MdMailOutline
+                      style={{
+                        position: "absolute",
+                        left: 11,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        color: "#697565",
+                        fontSize: 16,
+                        pointerEvents: "none",
+                      }}
+                    />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      style={{ ...inputStyle, paddingLeft: 34 }}
+                      placeholder="you@example.com"
+                      required
+                      onFocus={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.45)")}
+                      onBlur={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.15)")}
+                    />
+                  </div>
+                </div>
 
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ color: "#a8b5a4", fontSize: 12, fontWeight: 600, display: "block", marginBottom: 6 }}>
-                PASSWORD
-              </label>
-              <div style={{ position: "relative" }}>
-                <MdLockOutline
-                  style={{
-                    position: "absolute",
-                    left: 11,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "#697565",
-                    fontSize: 16,
-                    pointerEvents: "none",
-                  }}
-                />
+                <div style={{ marginBottom: 24 }}>
+                  <label style={{ color: "#a8b5a4", fontSize: 12, fontWeight: 600, display: "block", marginBottom: 6 }}>
+                    PASSWORD
+                  </label>
+                  <div style={{ position: "relative" }}>
+                    <MdLockOutline
+                      style={{
+                        position: "absolute",
+                        left: 11,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        color: "#697565",
+                        fontSize: 16,
+                        pointerEvents: "none",
+                      }}
+                    />
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      style={{ ...inputStyle, paddingLeft: 34 }}
+                      placeholder="••••••••"
+                      required
+                      onFocus={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.45)")}
+                      onBlur={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.15)")}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ color: "#a8b5a4", fontSize: 12, fontWeight: 600, display: "block", marginBottom: 6 }}>
+                  VERIFICATION CODE
+                </label>
                 <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={{ ...inputStyle, paddingLeft: 34 }}
-                  placeholder="••••••••"
+                  type="text"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  style={{ ...inputStyle, textAlign: "center", fontSize: 24, letterSpacing: 8, fontWeight: 700 }}
+                  placeholder="000000"
+                  maxLength={6}
                   required
+                  autoFocus
                   onFocus={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.45)")}
                   onBlur={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.15)")}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowOTP(false)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#697565",
+                    fontSize: 12,
+                    marginTop: 10,
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                  }}
+                >
+                  Back to login
+                </button>
               </div>
-            </div>
+            )}
 
             <button
               type="submit"
@@ -165,7 +220,7 @@ const Login = () => {
               onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "#9bffaa"; }}
               onMouseLeave={(e) => { if (!loading) e.currentTarget.style.background = "#7DFF6B"; }}
             >
-              {loading ? "Signing in…" : "Sign In"}
+              {loading ? (showOTP ? "Verifying…" : "Signing in…") : (showOTP ? "Verify OTP" : "Sign In")}
             </button>
           </form>
 

@@ -3,6 +3,7 @@ const { body } = require("express-validator");
 const {
   register,
   login,
+  verifyOTP,
   getProfile,
   getAllUsers,
 } = require("../controllers/authController");
@@ -47,6 +48,16 @@ router.post(
   ],
   handleValidationErrors,
   login
+);
+
+router.post(
+  "/verify-otp",
+  [
+    body("email").isEmail().withMessage("Valid email is required"),
+    body("otp").isLength({ min: 6, max: 6 }).withMessage("OTP must be 6 digits"),
+  ],
+  handleValidationErrors,
+  verifyOTP
 );
 
 router.get("/profile", protect, getProfile);
