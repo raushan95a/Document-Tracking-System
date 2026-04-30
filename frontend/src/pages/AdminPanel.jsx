@@ -9,12 +9,22 @@ import { getSocket } from "../services/socket";
 import { resetAdminFilters, setAdminFilters } from "../store/documentFiltersSlice";
 import { DEPARTMENT_OPTIONS } from "../constants/departments";
 
-const formatDate = (s) => new Date(s).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+const formatDate = (s) =>
+  new Date(s).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
 const inp = {
-  background: "#181a17", border: "1px solid rgba(125,255,107,0.15)",
-  borderRadius: 7, padding: "7px 10px", color: "#e8e8e4", fontSize: 12,
-  outline: "none", appearance: "none", boxSizing: "border-box", width: "100%",
+  background: "#ffffff",
+  border: "1px solid #e5e7eb",
+  borderRadius: 8,
+  padding: "7px 10px",
+  color: "#111111",
+  fontSize: 13,
+  outline: "none",
+  appearance: "none",
+  boxSizing: "border-box",
+  width: "100%",
+  fontFamily: "'Inter', sans-serif",
+  transition: "border-color 0.15s",
 };
 
 const AdminPanel = () => {
@@ -76,49 +86,80 @@ const AdminPanel = () => {
   const handleSaveUser = async (uid) => {
     const payload = userEdits[uid]; if (!payload) return;
     setSavingUserId(uid);
-    try { await api.put(`/users/${uid}`, { role: payload.role, department: payload.department }); toast.success("User updated"); await fetchUsers(); }
-    catch (err) { toast.error(err?.response?.data?.message || "Failed to update user"); }
+    try {
+      await api.put(`/users/${uid}`, { role: payload.role, department: payload.department });
+      toast.success("User updated");
+      await fetchUsers();
+    } catch (err) { toast.error(err?.response?.data?.message || "Failed to update user"); }
     finally { setSavingUserId(""); }
   };
 
   const handleDeleteUser = async (uid) => {
     setDeletingUserId(uid);
-    try { await api.delete(`/users/${uid}`); toast.success("User deleted"); await fetchUsers(); }
-    catch (err) { toast.error(err?.response?.data?.message || "Failed to delete user"); }
+    try {
+      await api.delete(`/users/${uid}`);
+      toast.success("User deleted");
+      await fetchUsers();
+    } catch (err) { toast.error(err?.response?.data?.message || "Failed to delete user"); }
     finally { setDeletingUserId(""); }
   };
 
   const spinner = (
-    <div style={{ padding: 48, display: "flex", justifyContent: "center" }}>
-      <div style={{ width: 22, height: 22, border: "2px solid rgba(125,255,107,0.2)", borderTopColor: "#7DFF6B", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+    <div style={{ padding: 52, display: "flex", justifyContent: "center" }}>
+      <div style={{ width: 22, height: 22, border: "2px solid #e5e7eb", borderTopColor: "#111111", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
     </div>
   );
 
-  const thStyle = { padding: "11px 14px", color: "#697565", fontSize: 11, fontWeight: 700, textAlign: "left", textTransform: "uppercase", letterSpacing: "0.06em" };
-  const tdStyle = { padding: "11px 14px", color: "#a8b5a4", fontSize: 13 };
+  const thStyle = {
+    padding: "10px 14px",
+    color: "#6b7280",
+    fontSize: 12,
+    fontWeight: 600,
+    textAlign: "left",
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+  };
+
+  const tdStyle = { padding: "12px 14px", color: "#6b7280", fontSize: 14 };
 
   return (
-    <div style={{ minHeight: "100%", padding: 24 }}>
-      <h1 style={{ color: "#e8e8e4", fontSize: 20, fontWeight: 700, marginBottom: 24 }}>Admin Panel</h1>
+    <div style={{ minHeight: "100%", padding: 28, fontFamily: "'Inter', sans-serif" }}>
 
-      {/* tabs */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: "1px solid rgba(125,255,107,0.1)", paddingBottom: 0 }}>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 600, color: "#111111", letterSpacing: "-0.3px", marginBottom: 4 }}>
+          Admin Panel
+        </h1>
+        <p style={{ fontSize: 14, color: "#6b7280" }}>Manage documents and user accounts.</p>
+      </div>
+
+      {/* Tabs — nav-pill-group style */}
+      <div
+        style={{
+          display: "inline-flex",
+          background: "#f5f5f5",
+          borderRadius: 9999,
+          padding: 4,
+          marginBottom: 24,
+          gap: 2,
+        }}
+      >
         {["documents", "users"].map((tab) => (
           <button
             key={tab}
             type="button"
             onClick={() => setActiveTab(tab)}
             style={{
-              background: activeTab === tab ? "rgba(125,255,107,0.1)" : "transparent",
-              color: activeTab === tab ? "#7DFF6B" : "#697565",
+              background: activeTab === tab ? "#ffffff" : "transparent",
+              color: activeTab === tab ? "#111111" : "#6b7280",
               border: "none",
-              borderBottom: activeTab === tab ? "2px solid #7DFF6B" : "2px solid transparent",
-              padding: "9px 20px",
-              fontSize: 13,
-              fontWeight: 600,
+              borderRadius: 9999,
+              padding: "7px 18px",
+              fontSize: 14,
+              fontWeight: activeTab === tab ? 600 : 500,
               cursor: "pointer",
-              textTransform: "capitalize",
               transition: "all 0.15s",
+              boxShadow: activeTab === tab ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+              fontFamily: "'Inter', sans-serif",
             }}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -128,41 +169,110 @@ const AdminPanel = () => {
 
       {activeTab === "documents" ? (
         <>
-          {/* filters */}
-          <div style={{ background: "#111210", border: "1px solid rgba(125,255,107,0.1)", borderRadius: 10, padding: 14, marginBottom: 16 }}>
+          {/* Filters */}
+          <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 12, padding: 14, marginBottom: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
             <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr auto", gap: 10 }}>
-              <input type="text" value={filters.search} placeholder="Search title / description…" onChange={(e) => dispatch(setAdminFilters({ search: e.target.value }))} style={inp} onFocus={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.4)")} onBlur={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.15)")} />
-              <select value={filters.status} onChange={(e) => dispatch(setAdminFilters({ status: e.target.value }))} style={inp}>
-                <option value="" style={{ background: "#181a17" }}>All Statuses</option>
-                {["Submitted", "Under Review", "Approved", "Rejected"].map((s) => <option key={s} value={s} style={{ background: "#181a17" }}>{s}</option>)}
+              <input
+                type="text"
+                value={filters.search}
+                placeholder="Search title / description…"
+                onChange={(e) => dispatch(setAdminFilters({ search: e.target.value }))}
+                style={inp}
+                onFocus={(e) => (e.target.style.borderColor = "#111111")}
+                onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
+              />
+              <select
+                value={filters.status}
+                onChange={(e) => dispatch(setAdminFilters({ status: e.target.value }))}
+                style={inp}
+                onFocus={(e) => (e.target.style.borderColor = "#111111")}
+                onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
+              >
+                <option value="">All Statuses</option>
+                {["Submitted", "Under Review", "Approved", "Rejected"].map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
               </select>
-              <select value={filters.department} onChange={(e) => dispatch(setAdminFilters({ department: e.target.value }))} style={inp}>
-                <option value="" style={{ background: "#181a17" }}>All Departments</option>
-                {DEPARTMENT_OPTIONS.map((d) => <option key={d} value={d} style={{ background: "#181a17" }}>{d}</option>)}
+              <select
+                value={filters.department}
+                onChange={(e) => dispatch(setAdminFilters({ department: e.target.value }))}
+                style={inp}
+                onFocus={(e) => (e.target.style.borderColor = "#111111")}
+                onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
+              >
+                <option value="">All Departments</option>
+                {DEPARTMENT_OPTIONS.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
               </select>
-              <button type="button" onClick={() => dispatch(resetAdminFilters())} style={{ background: "transparent", border: "1px solid rgba(125,255,107,0.2)", color: "#7DFF6B", borderRadius: 7, padding: "7px 14px", fontSize: 12, cursor: "pointer" }}>Clear</button>
+              <button
+                type="button"
+                onClick={() => dispatch(resetAdminFilters())}
+                style={{
+                  background: "#ffffff",
+                  border: "1px solid #e5e7eb",
+                  color: "#374151",
+                  borderRadius: 8,
+                  padding: "7px 16px",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  fontFamily: "'Inter', sans-serif",
+                  transition: "border-color 0.15s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#111111")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
+              >
+                Clear
+              </button>
             </div>
           </div>
 
-          {/* documents table */}
-          <div style={{ background: "#111210", border: "1px solid rgba(125,255,107,0.1)", borderRadius: 10, overflow: "hidden" }}>
+          {/* Documents table */}
+          <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
             {loadingDocuments ? spinner : (
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead><tr style={{ borderBottom: "1px solid rgba(125,255,107,0.1)" }}>
-                  {["Title", "Department", "Status", "Uploaded By", "Date", ""].map((h) => <th key={h} style={thStyle}>{h}</th>)}
-                </tr></thead>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid #f3f4f6", background: "#f8f9fa" }}>
+                    {["Title", "Department", "Status", "Uploaded By", "Date", ""].map((h) => (
+                      <th key={h} style={thStyle}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
                 <tbody>
                   {documents.map((doc, i) => (
-                    <tr key={doc._id} style={{ borderTop: i > 0 ? "1px solid rgba(125,255,107,0.06)" : "none", transition: "background 0.15s" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(125,255,107,0.04)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
-                      <td style={{ ...tdStyle, color: "#e8e8e4" }}>{doc.title}</td>
+                    <tr
+                      key={doc._id}
+                      style={{ borderTop: i > 0 ? "1px solid #f3f4f6" : "none", transition: "background 0.1s" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#f8f9fa")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <td style={{ ...tdStyle, color: "#111111", fontWeight: 500 }}>{doc.title}</td>
                       <td style={tdStyle}>{doc.department || "—"}</td>
                       <td style={tdStyle}><StatusBadge status={doc.workflow?.currentStage || doc.status || "Submitted"} /></td>
                       <td style={tdStyle}>{doc.uploadedBy?.name || "—"}</td>
-                      <td style={{ ...tdStyle, color: "#697565", fontSize: 12 }}>{formatDate(doc.createdAt)}</td>
+                      <td style={{ ...tdStyle, color: "#9ca3af", fontSize: 13 }}>{formatDate(doc.createdAt)}</td>
                       <td style={tdStyle}>
-                        <button type="button" onClick={() => navigate(`/documents/${doc._id}`)} style={{ color: "#7DFF6B", background: "transparent", border: "1px solid rgba(125,255,107,0.25)", borderRadius: 6, padding: "3px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>View</button>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/documents/${doc._id}`)}
+                          style={{
+                            color: "#111111",
+                            background: "#ffffff",
+                            border: "1px solid #e5e7eb",
+                            borderRadius: 6,
+                            padding: "4px 14px",
+                            fontSize: 13,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            fontFamily: "'Inter', sans-serif",
+                            transition: "border-color 0.15s",
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#111111")}
+                          onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
+                        >
+                          View
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -172,37 +282,99 @@ const AdminPanel = () => {
           </div>
         </>
       ) : (
-        <div style={{ background: "#111210", border: "1px solid rgba(125,255,107,0.1)", borderRadius: 10, overflow: "hidden" }}>
+        /* Users table */
+        <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
           {loadingUsers ? spinner : (
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead><tr style={{ borderBottom: "1px solid rgba(125,255,107,0.1)" }}>
-                {["Name", "Username", "Email", "Role", "Department", "Actions"].map((h) => <th key={h} style={thStyle}>{h}</th>)}
-              </tr></thead>
+              <thead>
+                <tr style={{ borderBottom: "1px solid #f3f4f6", background: "#f8f9fa" }}>
+                  {["Name", "Username", "Email", "Role", "Department", "Actions"].map((h) => (
+                    <th key={h} style={thStyle}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
               <tbody>
                 {users.map((item, i) => (
-                  <tr key={item._id} style={{ borderTop: i > 0 ? "1px solid rgba(125,255,107,0.06)" : "none" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(125,255,107,0.04)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
-                    <td style={{ ...tdStyle, color: "#e8e8e4" }}>{item.name}</td>
+                  <tr
+                    key={item._id}
+                    style={{ borderTop: i > 0 ? "1px solid #f3f4f6" : "none", transition: "background 0.1s" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#f8f9fa")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <td style={{ ...tdStyle, color: "#111111", fontWeight: 500 }}>{item.name}</td>
                     <td style={tdStyle}>{item.username}</td>
                     <td style={tdStyle}>{item.email}</td>
                     <td style={tdStyle}>
-                      <select value={userEdits[item._id]?.role || item.role} onChange={(e) => handleUserFieldChange(item._id, "role", e.target.value)} style={{ ...inp, width: "auto" }}>
-                        {["employee", "manager", "admin"].map((r) => <option key={r} value={r} style={{ background: "#181a17" }}>{r}</option>)}
+                      <select
+                        value={userEdits[item._id]?.role || item.role}
+                        onChange={(e) => handleUserFieldChange(item._id, "role", e.target.value)}
+                        style={{ ...inp, width: "auto" }}
+                        onFocus={(e) => (e.target.style.borderColor = "#111111")}
+                        onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
+                      >
+                        {["employee", "manager", "admin"].map((r) => (
+                          <option key={r} value={r}>{r}</option>
+                        ))}
                       </select>
                     </td>
                     <td style={tdStyle}>
-                      <select value={userEdits[item._id]?.department || ""} onChange={(e) => handleUserFieldChange(item._id, "department", e.target.value)} style={inp}>
-                        <option value="" style={{ background: "#181a17" }}>Select…</option>
-                        {DEPARTMENT_OPTIONS.map((d) => <option key={d} value={d} style={{ background: "#181a17" }}>{d}</option>)}
+                      <select
+                        value={userEdits[item._id]?.department || ""}
+                        onChange={(e) => handleUserFieldChange(item._id, "department", e.target.value)}
+                        style={inp}
+                        onFocus={(e) => (e.target.style.borderColor = "#111111")}
+                        onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
+                      >
+                        <option value="">Select…</option>
+                        {DEPARTMENT_OPTIONS.map((d) => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
                       </select>
                     </td>
                     <td style={tdStyle}>
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button type="button" onClick={() => handleSaveUser(item._id)} disabled={savingUserId === item._id} style={{ background: "#7DFF6B", color: "#0d0f0c", border: "none", borderRadius: 6, padding: "4px 12px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveUser(item._id)}
+                          disabled={savingUserId === item._id}
+                          style={{
+                            background: "#111111",
+                            color: "#ffffff",
+                            border: "none",
+                            borderRadius: 6,
+                            padding: "5px 14px",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            fontFamily: "'Inter', sans-serif",
+                            opacity: savingUserId === item._id ? 0.6 : 1,
+                            transition: "background 0.15s",
+                          }}
+                          onMouseEnter={(e) => { if (savingUserId !== item._id) e.currentTarget.style.background = "#242424"; }}
+                          onMouseLeave={(e) => { if (savingUserId !== item._id) e.currentTarget.style.background = "#111111"; }}
+                        >
                           {savingUserId === item._id ? "…" : "Save"}
                         </button>
-                        <button type="button" onClick={() => handleDeleteUser(item._id)} disabled={deletingUserId === item._id} style={{ background: "transparent", color: "#f87171", border: "1px solid rgba(248,113,113,0.35)", borderRadius: 6, padding: "4px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteUser(item._id)}
+                          disabled={deletingUserId === item._id}
+                          style={{
+                            background: "#ffffff",
+                            color: "#ef4444",
+                            border: "1px solid #fecaca",
+                            borderRadius: 6,
+                            padding: "5px 14px",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            fontFamily: "'Inter', sans-serif",
+                            opacity: deletingUserId === item._id ? 0.6 : 1,
+                            transition: "border-color 0.15s",
+                          }}
+                          onMouseEnter={(e) => { if (deletingUserId !== item._id) e.currentTarget.style.borderColor = "#ef4444"; }}
+                          onMouseLeave={(e) => { if (deletingUserId !== item._id) e.currentTarget.style.borderColor = "#fecaca"; }}
+                        >
                           {deletingUserId === item._id ? "…" : "Delete"}
                         </button>
                       </div>
@@ -214,6 +386,7 @@ const AdminPanel = () => {
           )}
         </div>
       )}
+
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );

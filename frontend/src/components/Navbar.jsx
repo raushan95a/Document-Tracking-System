@@ -26,12 +26,12 @@ const Navbar = () => {
     }
   };
 
-  const roleColor = {
-    admin: { bg: "rgba(125,255,107,0.15)", color: "#7DFF6B", border: "rgba(125,255,107,0.3)" },
-    manager: { bg: "rgba(96,165,250,0.12)", color: "#60a5fa", border: "rgba(96,165,250,0.3)" },
-    employee: { bg: "rgba(105,117,101,0.2)", color: "#a8b5a4", border: "rgba(105,117,101,0.35)" },
+  const roleColors = {
+    admin: { color: "#8b5cf6", bg: "rgba(139,92,246,0.1)" },
+    manager: { color: "#3b82f6", bg: "rgba(59,130,246,0.1)" },
+    employee: { color: "#6b7280", bg: "rgba(107,114,128,0.1)" },
   };
-  const badge = roleColor[user?.role] || roleColor.employee;
+  const badge = roleColors[user?.role] || roleColors.employee;
 
   return (
     <header
@@ -41,43 +41,46 @@ const Navbar = () => {
         left: 0,
         right: 0,
         height: 56,
-        background: "#111210",
-        borderBottom: "1px solid rgba(125,255,107,0.1)",
+        background: "#ffffff",
+        borderBottom: "1px solid #e5e7eb",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         padding: "0 24px",
         zIndex: 50,
+        fontFamily: "'Inter', sans-serif",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      {/* brand */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <div
           style={{
-            width: 28,
-            height: 28,
+            width: 26,
+            height: 26,
             borderRadius: 7,
-            background: "#7DFF6B",
+            background: "#111111",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <MdDescription style={{ color: "#0d0f0c", fontSize: 16 }} />
+          <MdDescription style={{ color: "#fff", fontSize: 14 }} />
         </div>
-        <span style={{ color: "#e8e8e4", fontWeight: 700, fontSize: 15 }}>DocTrack</span>
+        <span style={{ color: "#111111", fontWeight: 600, fontSize: 15, letterSpacing: "-0.3px" }}>DocTrack</span>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <span style={{ color: "#a8b5a4", fontSize: 13 }}>{user?.name || "User"}</span>
+      {/* right cluster */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <span style={{ color: "#6b7280", fontSize: 13, fontWeight: 500 }}>{user?.name || "User"}</span>
+
         <span
           style={{
             fontSize: 11,
             fontWeight: 600,
             color: badge.color,
             background: badge.bg,
-            border: `1px solid ${badge.border}`,
-            borderRadius: 20,
-            padding: "2px 10px",
+            borderRadius: 9999,
+            padding: "3px 10px",
             textTransform: "capitalize",
           }}
         >
@@ -93,23 +96,20 @@ const Navbar = () => {
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
-                color: "#7DFF6B",
-                background: "rgba(125,255,107,0.1)",
-                border: "1px solid rgba(125,255,107,0.3)",
-                borderRadius: 7,
+                color: "#374151",
+                background: "#ffffff",
+                border: "1px solid #e5e7eb",
+                borderRadius: 8,
                 padding: "5px 12px",
                 fontSize: 13,
+                fontWeight: 500,
                 cursor: "pointer",
-                transition: "all 0.2s",
+                transition: "border-color 0.15s",
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(125,255,107,0.2)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(125,255,107,0.1)";
-              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#111111")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
             >
-              <MdQrCode style={{ fontSize: 16 }} />
+              <MdQrCode style={{ fontSize: 15 }} />
               QR Code
             </button>
 
@@ -117,22 +117,22 @@ const Navbar = () => {
               <div
                 style={{
                   position: "absolute",
-                  top: 45,
+                  top: 44,
                   right: 0,
-                  background: "#111210",
-                  border: "1px solid rgba(125,255,107,0.2)",
+                  background: "#ffffff",
+                  border: "1px solid #e5e7eb",
                   borderRadius: 12,
                   padding: 20,
-                  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
                   zIndex: 100,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: 15,
+                  gap: 14,
                   width: 200,
                 }}
               >
-                <div style={{ background: "white", padding: 10, borderRadius: 8 }}>
+                <div style={{ background: "#f5f5f5", padding: 10, borderRadius: 8 }}>
                   <QRCodeCanvas
                     id="qr-canvas"
                     value={currentUrl}
@@ -145,15 +145,18 @@ const Navbar = () => {
                   onClick={downloadQR}
                   style={{
                     width: "100%",
-                    background: "#7DFF6B",
-                    color: "#0d0f0c",
+                    background: "#111111",
+                    color: "#ffffff",
                     border: "none",
-                    borderRadius: 6,
-                    padding: "8px 0",
-                    fontSize: 12,
-                    fontWeight: 700,
+                    borderRadius: 8,
+                    padding: "9px 0",
+                    fontSize: 13,
+                    fontWeight: 600,
                     cursor: "pointer",
+                    transition: "background 0.15s",
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#242424")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "#111111")}
                 >
                   Download PNG
                 </button>
@@ -166,22 +169,23 @@ const Navbar = () => {
           type="button"
           onClick={logout}
           style={{
-            color: "#a8b5a4",
-            background: "transparent",
-            border: "1px solid rgba(125,255,107,0.2)",
-            borderRadius: 7,
+            color: "#374151",
+            background: "#ffffff",
+            border: "1px solid #e5e7eb",
+            borderRadius: 8,
             padding: "5px 14px",
             fontSize: 13,
+            fontWeight: 500,
             cursor: "pointer",
-            transition: "all 0.2s",
+            transition: "border-color 0.15s, color 0.15s",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = "#e8e8e4";
-            e.currentTarget.style.borderColor = "rgba(125,255,107,0.45)";
+            e.currentTarget.style.borderColor = "#111111";
+            e.currentTarget.style.color = "#111111";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = "#a8b5a4";
-            e.currentTarget.style.borderColor = "rgba(125,255,107,0.2)";
+            e.currentTarget.style.borderColor = "#e5e7eb";
+            e.currentTarget.style.color = "#374151";
           }}
         >
           Logout

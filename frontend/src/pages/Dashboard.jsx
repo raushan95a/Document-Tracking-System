@@ -19,15 +19,17 @@ const formatDate = (dateString) =>
 
 const inputStyle = {
   width: "100%",
-  background: "#181a17",
-  border: "1px solid rgba(125,255,107,0.15)",
+  background: "#ffffff",
+  border: "1px solid #e5e7eb",
   borderRadius: 8,
   padding: "8px 12px",
-  color: "#e8e8e4",
-  fontSize: 13,
+  color: "#111111",
+  fontSize: 14,
   outline: "none",
   boxSizing: "border-box",
   appearance: "none",
+  fontFamily: "'Inter', sans-serif",
+  transition: "border-color 0.15s",
 };
 
 const Dashboard = () => {
@@ -81,43 +83,53 @@ const Dashboard = () => {
   const title = titleMap[user?.role] || "Documents";
 
   return (
-    <div style={{ minHeight: "100%", padding: 24 }}>
-      {/* header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h1 style={{ color: "#e8e8e4", fontSize: 20, fontWeight: 700 }}>{title}</h1>
+    <div style={{ minHeight: "100%", padding: 28, fontFamily: "'Inter', sans-serif" }}>
+
+      {/* Page header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 600, color: "#111111", letterSpacing: "-0.3px", marginBottom: 2 }}>
+            {title}
+          </h1>
+          <p style={{ fontSize: 14, color: "#6b7280" }}>
+            {documents.length} document{documents.length !== 1 ? "s" : ""} found
+          </p>
+        </div>
         <button
           type="button"
           onClick={() => navigate("/upload")}
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 6,
-            background: "#7DFF6B",
-            color: "#0d0f0c",
-            fontWeight: 700,
-            fontSize: 13,
+            gap: 7,
+            background: "#111111",
+            color: "#ffffff",
+            fontWeight: 600,
+            fontSize: 14,
             border: "none",
             borderRadius: 8,
-            padding: "8px 16px",
+            padding: "9px 18px",
             cursor: "pointer",
-            transition: "background 0.2s",
+            transition: "background 0.15s",
+            fontFamily: "'Inter', sans-serif",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "#9bffaa")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "#7DFF6B")}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "#242424")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "#111111")}
         >
           <MdUploadFile style={{ fontSize: 16 }} />
           Upload Document
         </button>
       </div>
 
-      {/* filters */}
+      {/* Filters */}
       <div
         style={{
-          background: "#111210",
-          border: "1px solid rgba(125,255,107,0.1)",
-          borderRadius: 10,
+          background: "#ffffff",
+          border: "1px solid #e5e7eb",
+          borderRadius: 12,
           padding: 16,
           marginBottom: 16,
+          boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
         }}
       >
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr auto", gap: 10 }}>
@@ -127,17 +139,19 @@ const Dashboard = () => {
             placeholder="Search title / description…"
             onChange={(e) => dispatch(setDashboardFilters({ search: e.target.value }))}
             style={inputStyle}
-            onFocus={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.4)")}
-            onBlur={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.15)")}
+            onFocus={(e) => (e.target.style.borderColor = "#111111")}
+            onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
           />
           <select
             value={filters.status}
             onChange={(e) => dispatch(setDashboardFilters({ status: e.target.value }))}
             style={inputStyle}
+            onFocus={(e) => (e.target.style.borderColor = "#111111")}
+            onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
           >
-            <option value="" style={{ background: "#181a17" }}>All Statuses</option>
+            <option value="">All Statuses</option>
             {["Submitted", "Under Review", "Approved", "Rejected"].map((s) => (
-              <option key={s} value={s} style={{ background: "#181a17" }}>{s}</option>
+              <option key={s} value={s}>{s}</option>
             ))}
           </select>
           <select
@@ -145,76 +159,82 @@ const Dashboard = () => {
             disabled={user?.role === "manager"}
             onChange={(e) => dispatch(setDashboardFilters({ department: e.target.value }))}
             style={{ ...inputStyle, opacity: user?.role === "manager" ? 0.5 : 1 }}
+            onFocus={(e) => (e.target.style.borderColor = "#111111")}
+            onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
           >
-            <option value="" style={{ background: "#181a17" }}>All Departments</option>
+            <option value="">All Departments</option>
             {DEPARTMENT_OPTIONS.map((d) => (
-              <option key={d} value={d} style={{ background: "#181a17" }}>{d}</option>
+              <option key={d} value={d}>{d}</option>
             ))}
           </select>
           <button
             type="button"
             onClick={() => dispatch(resetDashboardFilters())}
             style={{
-              background: "transparent",
-              border: "1px solid rgba(125,255,107,0.2)",
-              color: "#7DFF6B",
+              background: "#ffffff",
+              border: "1px solid #e5e7eb",
+              color: "#374151",
               borderRadius: 8,
-              padding: "8px 14px",
-              fontSize: 13,
+              padding: "8px 16px",
+              fontSize: 14,
+              fontWeight: 500,
               cursor: "pointer",
               whiteSpace: "nowrap",
-              transition: "all 0.2s",
+              transition: "border-color 0.15s, color 0.15s",
+              fontFamily: "'Inter', sans-serif",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(125,255,107,0.08)")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#111111"; e.currentTarget.style.color = "#111111"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#374151"; }}
           >
             Clear
           </button>
         </div>
       </div>
 
-      {/* table */}
+      {/* Table */}
       <div
         style={{
-          background: "#111210",
-          border: "1px solid rgba(125,255,107,0.1)",
-          borderRadius: 10,
+          background: "#ffffff",
+          border: "1px solid #e5e7eb",
+          borderRadius: 12,
           overflow: "hidden",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
         }}
       >
         {loading ? (
-          <div style={{ padding: 48, display: "flex", justifyContent: "center" }}>
+          <div style={{ padding: 52, display: "flex", justifyContent: "center" }}>
             <div
               style={{
                 width: 22,
                 height: 22,
-                border: "2px solid rgba(125,255,107,0.2)",
-                borderTopColor: "#7DFF6B",
+                border: "2px solid #e5e7eb",
+                borderTopColor: "#111111",
                 borderRadius: "50%",
                 animation: "spin 0.7s linear infinite",
               }}
             />
           </div>
         ) : documents.length === 0 ? (
-          <div style={{ padding: 52, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, color: "#697565" }}>
-            <MdInbox style={{ fontSize: 36 }} />
-            <span style={{ fontSize: 14 }}>No documents found</span>
+          <div style={{ padding: 52, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, color: "#6b7280" }}>
+            <MdInbox style={{ fontSize: 36, color: "#d1d5db" }} />
+            <span style={{ fontSize: 14, fontWeight: 500 }}>No documents found</span>
+            <span style={{ fontSize: 13, color: "#9ca3af" }}>Try adjusting your filters or upload a new document.</span>
           </div>
         ) : (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid rgba(125,255,107,0.1)" }}>
+              <tr style={{ borderBottom: "1px solid #f3f4f6", background: "#f8f9fa" }}>
                 {["Title", "Department", "Status", "Uploaded By", "Date", ""].map((h) => (
                   <th
                     key={h}
                     style={{
-                      padding: "12px 16px",
-                      color: "#697565",
-                      fontSize: 11,
-                      fontWeight: 700,
+                      padding: "10px 16px",
+                      color: "#6b7280",
+                      fontSize: 12,
+                      fontWeight: 600,
                       textAlign: "left",
                       textTransform: "uppercase",
-                      letterSpacing: "0.06em",
+                      letterSpacing: "0.05em",
                     }}
                   >
                     {h}
@@ -227,37 +247,38 @@ const Dashboard = () => {
                 <tr
                   key={doc._id}
                   style={{
-                    borderTop: i > 0 ? "1px solid rgba(125,255,107,0.06)" : "none",
-                    transition: "background 0.15s",
+                    borderTop: i > 0 ? "1px solid #f3f4f6" : "none",
+                    transition: "background 0.1s",
                     cursor: "pointer",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(125,255,107,0.04)")}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#f8f9fa")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
-                  <td style={{ padding: "12px 16px", color: "#e8e8e4", fontSize: 13 }}>{doc.title}</td>
-                  <td style={{ padding: "12px 16px", color: "#a8b5a4", fontSize: 13 }}>{doc.department || "—"}</td>
-                  <td style={{ padding: "12px 16px" }}>
+                  <td style={{ padding: "13px 16px", color: "#111111", fontSize: 14, fontWeight: 500 }}>{doc.title}</td>
+                  <td style={{ padding: "13px 16px", color: "#6b7280", fontSize: 14 }}>{doc.department || "—"}</td>
+                  <td style={{ padding: "13px 16px" }}>
                     <StatusBadge status={doc.workflow?.currentStage || doc.status || "Submitted"} />
                   </td>
-                  <td style={{ padding: "12px 16px", color: "#a8b5a4", fontSize: 13 }}>{doc.uploadedBy?.name || "—"}</td>
-                  <td style={{ padding: "12px 16px", color: "#697565", fontSize: 12 }}>{formatDate(doc.createdAt)}</td>
-                  <td style={{ padding: "12px 16px" }}>
+                  <td style={{ padding: "13px 16px", color: "#6b7280", fontSize: 14 }}>{doc.uploadedBy?.name || "—"}</td>
+                  <td style={{ padding: "13px 16px", color: "#9ca3af", fontSize: 13 }}>{formatDate(doc.createdAt)}</td>
+                  <td style={{ padding: "13px 16px" }}>
                     <button
                       type="button"
                       onClick={() => navigate(`/documents/${doc._id}`)}
                       style={{
-                        color: "#7DFF6B",
-                        background: "transparent",
-                        border: "1px solid rgba(125,255,107,0.25)",
+                        color: "#111111",
+                        background: "#ffffff",
+                        border: "1px solid #e5e7eb",
                         borderRadius: 6,
-                        padding: "4px 12px",
-                        fontSize: 12,
+                        padding: "5px 14px",
+                        fontSize: 13,
                         fontWeight: 600,
                         cursor: "pointer",
-                        transition: "all 0.15s",
+                        transition: "border-color 0.15s",
+                        fontFamily: "'Inter', sans-serif",
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(125,255,107,0.08)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#111111")}
+                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
                     >
                       View
                     </button>
@@ -268,6 +289,7 @@ const Dashboard = () => {
           </table>
         )}
       </div>
+
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );

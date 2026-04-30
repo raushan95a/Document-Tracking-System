@@ -1,11 +1,11 @@
 import React from "react";
 
 const statusStyles = {
-  Submitted: { color: "#a8b5a4", bg: "rgba(105,117,101,0.18)", border: "rgba(105,117,101,0.35)" },
-  "Under Review": { color: "#facc15", bg: "rgba(250,204,21,0.1)", border: "rgba(250,204,21,0.3)" },
-  Approved: { color: "#7DFF6B", bg: "rgba(125,255,107,0.1)", border: "rgba(125,255,107,0.3)" },
-  Rejected: { color: "#f87171", bg: "rgba(248,113,113,0.1)", border: "rgba(248,113,113,0.3)" },
-  Forwarded: { color: "#60a5fa", bg: "rgba(96,165,250,0.1)", border: "rgba(96,165,250,0.3)" },
+  Submitted: { color: "#6b7280", bg: "rgba(107,114,128,0.1)" },
+  "Under Review": { color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+  Approved: { color: "#10b981", bg: "rgba(16,185,129,0.1)" },
+  Rejected: { color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
+  Forwarded: { color: "#3b82f6", bg: "rgba(59,130,246,0.1)" },
 };
 
 const StatusBadge = ({ status }) => {
@@ -14,14 +14,14 @@ const StatusBadge = ({ status }) => {
     <span
       style={{
         display: "inline-block",
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: 600,
         color: s.color,
         background: s.bg,
-        border: `1px solid ${s.border}`,
-        borderRadius: 20,
+        borderRadius: 9999,
         padding: "3px 10px",
         whiteSpace: "nowrap",
+        fontFamily: "'Inter', sans-serif",
       }}
     >
       {status || "Submitted"}

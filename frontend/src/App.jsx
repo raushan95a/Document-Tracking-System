@@ -18,14 +18,13 @@ import Chatbot from "./components/Chatbot";
 
 const Layout = ({ children }) => {
   return (
-    <div style={{ display: "flex", height: "100vh", background: "#0d0f0c" }}>
+    <div style={{ display: "flex", height: "100vh", background: "#f8f9fa" }}>
       <Sidebar />
       <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
         <Navbar />
-        <main style={{ background: "#0d0f0c", overflowY: "auto", paddingTop: 56, paddingLeft: 224, minHeight: "100vh" }}>{children}</main>
+        <main style={{ background: "#f8f9fa", overflowY: "auto", paddingTop: 56, paddingLeft: 220, minHeight: "100vh" }}>{children}</main>
         <Chatbot />
       </div>
-
     </div>
   );
 };
@@ -35,8 +34,8 @@ const AppRoutes = () => {
 
   if (isAuthLoading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#0d0f0c", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ width: 24, height: 24, border: "2px solid rgba(125,255,107,0.2)", borderTopColor: "#7DFF6B", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+      <div style={{ minHeight: "100vh", background: "#f8f9fa", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 24, height: 24, border: "2px solid #e5e7eb", borderTopColor: "#111111", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
         <style>{"@keyframes spin { to { transform: rotate(360deg); } }"}</style>
       </div>
     );
@@ -111,7 +110,11 @@ const App = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ToastContainer position="bottom-right" theme="light" />
+        <ToastContainer
+          position="bottom-right"
+          theme="light"
+          toastStyle={{ fontFamily: "'Inter', sans-serif", fontSize: 14, borderRadius: 8 }}
+        />
         <AppRoutes />
       </AuthProvider>
     </BrowserRouter>

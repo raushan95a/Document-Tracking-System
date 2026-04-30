@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import {
   MdCheckCircle,
@@ -6,277 +6,230 @@ import {
   MdApproval,
   MdManageHistory,
   MdSecurity,
-  MdKeyboardArrowRight,
+  MdArrowForward,
 } from "react-icons/md";
 
-/* ─── Tiny canvas for the star-field background ─── */
-const StarField = () => {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    let animId;
-
-    const resize = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    const stars = Array.from({ length: 160 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      r: Math.random() * 1.2 + 0.2,
-      alpha: Math.random(),
-      speed: Math.random() * 0.004 + 0.001,
-    }));
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      stars.forEach((s) => {
-        s.alpha += s.speed;
-        if (s.alpha > 1 || s.alpha < 0) s.speed *= -1;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(125,255,107,${s.alpha * 0.6})`;
-        ctx.fill();
-      });
-      animId = requestAnimationFrame(draw);
-    };
-    draw();
-
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
-        pointerEvents: "none",
-      }}
-    />
-  );
-};
-
-/* ─── Mock document-list card ─── */
+/* ─── Mock document-list card (product UI fragment) ─── */
 const recentDocs = [
   { name: "Project Charter v3", dept: "Engineering", status: "Approved" },
   { name: "Q2 Budget Report", dept: "Finance", status: "In Review" },
   { name: "HR Policy Update", dept: "Human Resources", status: "Forwarded" },
   { name: "Vendor Contract 2026", dept: "Procurement", status: "Approved" },
   { name: "Security Audit Log", dept: "IT / Compliance", status: "Pending" },
-  { name: "Marketing Brief", dept: "Marketing", status: "Approved" },
 ];
 
-const statusColor = {
-  Approved: "#7DFF6B",
-  "In Review": "#facc15",
-  Forwarded: "#60a5fa",
-  Pending: "#f97316",
+const statusConfig = {
+  Approved: { color: "#10b981", bg: "rgba(16,185,129,0.1)", label: "Approved" },
+  "In Review": { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", label: "In Review" },
+  Forwarded: { color: "#3b82f6", bg: "rgba(59,130,246,0.1)", label: "Forwarded" },
+  Pending: { color: "#6b7280", bg: "rgba(107,114,128,0.1)", label: "Pending" },
 };
 
 const DocMockup = () => (
   <div
     style={{
-      background: "#181a17",
-      borderRadius: 20,
-      border: "1px solid rgba(125,255,107,0.18)",
-      boxShadow: "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(125,255,107,0.08)",
+      background: "#ffffff",
+      borderRadius: 16,
+      border: "1px solid #e5e7eb",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
       overflow: "hidden",
       width: "100%",
-      maxWidth: 420,
+      animation: "floatY 5s ease-in-out infinite",
     }}
   >
-    {/* top bar */}
+    {/* mockup top bar */}
     <div
       style={{
-        background: "#111210",
-        padding: "14px 18px",
+        background: "#f5f5f5",
+        padding: "14px 20px",
         display: "flex",
         alignItems: "center",
         gap: 10,
-        borderBottom: "1px solid rgba(125,255,107,0.1)",
+        borderBottom: "1px solid #e5e7eb",
       }}
     >
-      <MdDescription style={{ color: "#7DFF6B", fontSize: 20 }} />
+      <div
+        style={{
+          width: 30,
+          height: 30,
+          borderRadius: 8,
+          background: "#111111",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <MdDescription style={{ color: "#fff", fontSize: 16 }} />
+      </div>
       <div>
-        <div style={{ color: "#fff", fontSize: 14, fontWeight: 600 }}>Document Tracker</div>
-        <div style={{ color: "#697565", fontSize: 11 }}>
-          {recentDocs.length} documents active
-        </div>
+        <div style={{ color: "#111111", fontSize: 13, fontWeight: 600 }}>Document Tracker</div>
+        <div style={{ color: "#6b7280", fontSize: 11 }}>{recentDocs.length} active documents</div>
       </div>
     </div>
 
+    {/* column headers */}
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr auto",
+        padding: "8px 20px",
+        borderBottom: "1px solid #f3f4f6",
+      }}
+    >
+      <span style={{ fontSize: 10, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em" }}>Document</span>
+      <span style={{ fontSize: 10, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em" }}>Status</span>
+    </div>
+
     {/* document rows */}
-    <div style={{ padding: "8px 0" }}>
-      {recentDocs.map((doc) => (
-        <div
-          key={doc.name}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "10px 18px",
-            transition: "background 0.2s",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(125,255,107,0.05)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
+    <div>
+      {recentDocs.map((doc) => {
+        const st = statusConfig[doc.status] || statusConfig.Pending;
+        return (
+          <div
+            key={doc.name}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "11px 20px",
+              borderBottom: "1px solid #f3f4f6",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  background: "#f5f5f5",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <MdDescription style={{ color: "#6b7280", fontSize: 15 }} />
+              </div>
+              <div>
+                <div style={{ color: "#111111", fontSize: 13, fontWeight: 500 }}>{doc.name}</div>
+                <div style={{ color: "#6b7280", fontSize: 11 }}>{doc.dept}</div>
+              </div>
+            </div>
+            <span
               style={{
-                width: 34,
-                height: 34,
-                borderRadius: 8,
-                background: "rgba(125,255,107,0.12)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
+                fontSize: 11,
+                fontWeight: 600,
+                color: st.color,
+                background: st.bg,
+                borderRadius: 9999,
+                padding: "3px 10px",
               }}
             >
-              <MdDescription style={{ color: "#7DFF6B", fontSize: 16 }} />
-            </div>
-            <div>
-              <div style={{ color: "#e8e8e4", fontSize: 13, fontWeight: 500 }}>{doc.name}</div>
-              <div style={{ color: "#697565", fontSize: 11 }}>{doc.dept}</div>
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <MdCheckCircle
-              style={{ color: statusColor[doc.status] || "#697565", fontSize: 14 }}
-            />
-            <span style={{ color: statusColor[doc.status] || "#697565", fontSize: 11, fontWeight: 500 }}>
-              {doc.status}
+              {st.label}
             </span>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   </div>
 );
 
-/* ─── Feature pills ─── */
+/* ─── Feature cards data ─── */
 const features = [
-  { icon: MdDescription, label: "Full Lifecycle Tracking" },
-  { icon: MdApproval, label: "Multi-Stage Approvals" },
-  { icon: MdManageHistory, label: "Audit-Ready History" },
-  { icon: MdSecurity, label: "Role-Based Access" },
+  {
+    icon: MdDescription,
+    title: "Full Lifecycle Tracking",
+    desc: "Monitor every document from submission to final approval with complete visibility at every step.",
+  },
+  {
+    icon: MdApproval,
+    title: "Multi-Stage Approvals",
+    desc: "Route documents through managers and reviewers with automated notifications at each stage.",
+  },
+  {
+    icon: MdManageHistory,
+    title: "Audit-Ready History",
+    desc: "Every action is logged with timestamps and user attribution for compliance and accountability.",
+  },
+  {
+    icon: MdSecurity,
+    title: "Role-Based Access",
+    desc: "Fine-grained permissions ensure employees, managers, and admins only see what they need.",
+  },
 ];
 
-/* ─── Main Landing ─── */
+/* ─── Landing ─── */
 const Landing = () => {
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#0d0f0c",
-        color: "#e8e8e4",
-        fontFamily: "'Segoe UI', system-ui, sans-serif",
-        position: "relative",
-        overflowX: "hidden",
-      }}
-    >
-      {/* animated star canvas */}
-      <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
-        <StarField />
-      </div>
+    <div style={{ minHeight: "100vh", background: "#ffffff", color: "#374151", fontFamily: "'Inter', sans-serif" }}>
 
-      {/* subtle radial glow */}
-
-
-      {/* ── NAV ── */}
+      {/* ── TOP NAV ── */}
       <nav
         style={{
-          position: "relative",
-          zIndex: 10,
+          position: "sticky",
+          top: 0,
+          zIndex: 50,
+          background: "#ffffff",
+          borderBottom: "1px solid #e5e7eb",
+          height: 64,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "20px 40px",
-          borderBottom: "1px solid rgba(125,255,107,0.08)",
+          padding: "0 40px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {/* wordmark */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div
             style={{
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 30,
               borderRadius: 8,
-              background: "#7DFF6B",
+              background: "#111111",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <MdDescription style={{ color: "#0d0f0c", fontSize: 18 }} />
+            <MdDescription style={{ color: "#fff", fontSize: 16 }} />
           </div>
-          <span style={{ fontWeight: 700, fontSize: 16, color: "#fff" }}>DocTrack</span>
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 600,
-              color: "#7DFF6B",
-              background: "rgba(125,255,107,0.12)",
-              border: "1px solid rgba(125,255,107,0.3)",
-              borderRadius: 20,
-              padding: "2px 8px",
-              letterSpacing: "0.05em",
-            }}
-          >
-            v1.0
-          </span>
+          <span style={{ fontWeight: 600, fontSize: 16, color: "#111111", letterSpacing: "-0.3px" }}>DocTrack</span>
         </div>
 
-        <div style={{ display: "flex", gap: 12 }}>
+        {/* nav actions */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Link
             to="/login"
             style={{
-              color: "#a8b5a4",
-              textDecoration: "none",
+              color: "#374151",
               fontSize: 14,
-              padding: "8px 18px",
+              fontWeight: 500,
+              padding: "8px 14px",
               borderRadius: 8,
-              border: "1px solid rgba(125,255,107,0.2)",
-              transition: "all 0.2s",
+              transition: "color 0.15s",
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "#7DFF6B";
-              e.currentTarget.style.borderColor = "rgba(125,255,107,0.5)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "#a8b5a4";
-              e.currentTarget.style.borderColor = "rgba(125,255,107,0.2)";
-            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#111111")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#374151")}
           >
-            Sign In
+            Sign in
           </Link>
           <Link
             to="/register"
             style={{
-              color: "#0d0f0c",
+              color: "#ffffff",
               textDecoration: "none",
               fontSize: 14,
               fontWeight: 600,
-              padding: "8px 18px",
+              padding: "8px 20px",
               borderRadius: 8,
-              background: "#7DFF6B",
-              transition: "all 0.2s",
+              background: "#111111",
+              transition: "background 0.15s",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#9bffaa")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#7DFF6B")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#242424")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#111111")}
           >
-            Get Started
+            Get started free
           </Link>
         </div>
       </nav>
@@ -284,228 +237,430 @@ const Landing = () => {
       {/* ── HERO ── */}
       <section
         style={{
-          position: "relative",
-          zIndex: 10,
           maxWidth: 1200,
           margin: "0 auto",
-          padding: "60px 40px 80px",
+          padding: "96px 40px",
+          display: "grid",
+          gridTemplateColumns: "7fr 5fr",
+          gap: 48,
+          alignItems: "center",
         }}
       >
-        {/* badge */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}>
+        {/* left: headline + CTA */}
+        <div>
+          {/* badge */}
           <span
             style={{
-              fontSize: 12,
+              display: "inline-block",
+              fontSize: 13,
               fontWeight: 500,
-              color: "#7DFF6B",
-              background: "rgba(125,255,107,0.1)",
-              border: "1px solid rgba(125,255,107,0.25)",
-              borderRadius: 20,
-              padding: "5px 14px",
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
+              color: "#111111",
+              background: "#f5f5f5",
+              borderRadius: 9999,
+              padding: "4px 14px",
+              marginBottom: 28,
             }}
           >
-            Document Tracking System &nbsp;·&nbsp; Built for Teams
+            Document Tracking System · Built for Teams
           </span>
-        </div>
 
-        {/* big headline */}
-        <h1
-          style={{
-            textAlign: "center",
-            fontSize: "clamp(52px, 9vw, 110px)",
-            fontWeight: 900,
-            lineHeight: 1,
-            letterSpacing: "-0.03em",
-            color: "#7DFF6B",
-            textShadow: "0 0 80px rgba(125,255,107,0.25)",
-            marginBottom: 0,
-          }}
-        >
-          Track every
-        </h1>
-        <h1
-          style={{
-            textAlign: "center",
-            fontSize: "clamp(52px, 9vw, 110px)",
-            fontWeight: 900,
-            lineHeight: 1,
-            letterSpacing: "-0.03em",
-            color: "#7DFF6B",
-            textShadow: "0 0 80px rgba(125,255,107,0.25)",
-            marginBottom: 24,
-          }}
-        >
-          document.
-        </h1>
-
-        {/* sub taglines */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            flexWrap: "wrap",
-            gap: 16,
-            marginBottom: 60,
-          }}
-        >
-          <p
+          <h1
             style={{
-              color: "#7DFF6B",
-              fontFamily: "'Courier New', monospace",
-              fontSize: "clamp(13px, 1.8vw, 17px)",
-              lineHeight: 1.5,
-              maxWidth: 280,
+              fontSize: "clamp(40px, 5.5vw, 64px)",
+              fontWeight: 600,
+              lineHeight: 1.05,
+              letterSpacing: "-2px",
+              color: "#111111",
+              marginBottom: 24,
             }}
           >
-            From your office desk,<br />in a couple of clicks.
-          </p>
+            The smarter way to track every document.
+          </h1>
+
           <p
             style={{
-              color: "#697565",
-              fontFamily: "'Courier New', monospace",
-              fontSize: "clamp(12px, 1.5vw, 15px)",
+              fontSize: 18,
               lineHeight: 1.6,
-              maxWidth: 300,
-              textAlign: "right",
+              color: "#374151",
+              maxWidth: 480,
+              marginBottom: 40,
             }}
           >
-            A tool for organizations.<br />
-            <span style={{ color: "#a8b5a4" }}>Simple. Transparent. Reliable.</span>
+            From submission to final approval — DocTrack gives your organization complete visibility,
+            accountability, and control over every document in flight.
           </p>
-        </div>
 
-        {/* mockup + pricing row */}
-        <div
-          style={{
-            display: "flex",
-            gap: 32,
-            alignItems: "flex-start",
-            justifyContent: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          {/* document mockup */}
-          <div
-            style={{
-              flex: "1 1 380px",
-              maxWidth: 440,
-              animation: "floatY 4s ease-in-out infinite",
-            }}
-          >
-            <DocMockup />
-          </div>
-
-          {/* right column: pricing + feature pills */}
-          <div style={{ flex: "1 1 280px", maxWidth: 340, display: "flex", flexDirection: "column", gap: 24 }}>
-            {/* pricing card */}
-            <div
-              style={{
-                background: "#7DFF6B",
-                borderRadius: 16,
-                padding: "24px 24px 20px",
-                color: "#0d0f0c",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  paddingBottom: 14,
-                  marginBottom: 14,
-                  borderBottom: "1px dashed rgba(0,0,0,0.2)",
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 14 }}>Employee Access</div>
-                  <div style={{ fontSize: 11, opacity: 0.65 }}>Full workflow visibility</div>
-                </div>
-                <span style={{ fontWeight: 800, fontSize: 16 }}>Free</span>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: 18,
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 14 }}>Admin / Manager</div>
-                  <div style={{ fontSize: 11, opacity: 0.65 }}>Full control, audit logs</div>
-                </div>
-                <span style={{ fontWeight: 800, fontSize: 16 }}>Org Plan</span>
-              </div>
-              <Link
-                to="/register"
+          {/* feature pills */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 40 }}>
+            {["Full lifecycle tracking", "Multi-stage approvals", "Audit-ready history", "Role-based access"].map((f) => (
+              <span
+                key={f}
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
                   gap: 6,
-                  background: "#0d0f0c",
-                  color: "#7DFF6B",
-                  textDecoration: "none",
-                  fontWeight: 700,
-                  fontSize: 14,
-                  borderRadius: 10,
-                  padding: "11px 0",
-                  transition: "background 0.2s",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: "#374151",
+                  background: "#f5f5f5",
+                  borderRadius: 9999,
+                  padding: "6px 14px",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#1a1c19")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "#0d0f0c")}
               >
-                Create Account <MdKeyboardArrowRight style={{ fontSize: 18 }} />
-              </Link>
-              <p style={{ textAlign: "center", fontSize: 10, opacity: 0.55, marginTop: 10 }}>
-                Role is assigned by your organization admin
-              </p>
-            </div>
+                <MdCheckCircle style={{ color: "#10b981", fontSize: 14 }} />
+                {f}
+              </span>
+            ))}
+          </div>
 
-            {/* feature pills */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {features.map(({ icon: Icon, label }) => (
+          {/* CTAs */}
+          <div style={{ display: "flex", gap: 12 }}>
+            <Link
+              to="/register"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                color: "#ffffff",
+                background: "#111111",
+                fontSize: 14,
+                fontWeight: 600,
+                padding: "12px 24px",
+                borderRadius: 8,
+                textDecoration: "none",
+                transition: "background 0.15s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#242424")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "#111111")}
+            >
+              Get started free <MdArrowForward />
+            </Link>
+            <Link
+              to="/login"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                color: "#111111",
+                background: "#ffffff",
+                fontSize: 14,
+                fontWeight: 600,
+                padding: "12px 24px",
+                borderRadius: 8,
+                border: "1px solid #e5e7eb",
+                textDecoration: "none",
+                transition: "border-color 0.15s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#111111")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e5e7eb")}
+            >
+              Sign in
+            </Link>
+          </div>
+        </div>
+
+        {/* right: product mockup card */}
+        <div style={{ width: "100%" }}>
+          <DocMockup />
+        </div>
+      </section>
+
+      {/* ── FEATURES SECTION ── */}
+      <section style={{ background: "#f8f9fa", padding: "96px 40px" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 64 }}>
+            <h2
+              style={{
+                fontSize: "clamp(28px, 4vw, 48px)",
+                fontWeight: 600,
+                lineHeight: 1.1,
+                letterSpacing: "-1.5px",
+                color: "#111111",
+                marginBottom: 16,
+              }}
+            >
+              Everything your team needs
+            </h2>
+            <p style={{ fontSize: 16, color: "#6b7280", maxWidth: 480, margin: "0 auto" }}>
+              A purpose-built platform for document workflows — simple enough for any team, powerful enough for enterprise compliance.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              gap: 24,
+            }}
+          >
+            {features.map(({ icon: Icon, title, desc }) => (
+              <div
+                key={title}
+                style={{
+                  background: "#f5f5f5",
+                  borderRadius: 12,
+                  padding: 32,
+                  transition: "box-shadow 0.2s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)")}
+                onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
+              >
                 <div
-                  key={label}
                   style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 10,
+                    background: "#111111",
                     display: "flex",
                     alignItems: "center",
-                    gap: 12,
-                    background: "rgba(125,255,107,0.06)",
-                    border: "1px solid rgba(125,255,107,0.14)",
-                    borderRadius: 10,
-                    padding: "10px 14px",
-                    transition: "background 0.2s, border-color 0.2s",
-                    cursor: "default",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(125,255,107,0.12)";
-                    e.currentTarget.style.borderColor = "rgba(125,255,107,0.35)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(125,255,107,0.06)";
-                    e.currentTarget.style.borderColor = "rgba(125,255,107,0.14)";
+                    justifyContent: "center",
+                    marginBottom: 20,
                   }}
                 >
-                  <Icon style={{ color: "#7DFF6B", fontSize: 20, flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, color: "#c8d4c4", fontWeight: 500 }}>{label}</span>
+                  <Icon style={{ color: "#fff", fontSize: 20 }} />
                 </div>
-              ))}
-            </div>
+                <h3 style={{ fontSize: 18, fontWeight: 600, color: "#111111", marginBottom: 10, letterSpacing: "-0.3px" }}>
+                  {title}
+                </h3>
+                <p style={{ fontSize: 15, color: "#6b7280", lineHeight: 1.6 }}>{desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* keyframes */}
-      <style>{`
-        @keyframes floatY {
-          0%,100% { transform: translateY(0px); }
-          50%      { transform: translateY(-12px); }
-        }
-      `}</style>
+      {/* ── HOW IT WORKS ── */}
+      <section style={{ padding: "96px 40px", background: "#ffffff" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 64 }}>
+            <h2
+              style={{
+                fontSize: "clamp(28px, 4vw, 48px)",
+                fontWeight: 600,
+                lineHeight: 1.1,
+                letterSpacing: "-1.5px",
+                color: "#111111",
+                marginBottom: 16,
+              }}
+            >
+              Works in three simple steps
+            </h2>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 24 }}>
+            {[
+              { step: "01", title: "Upload", desc: "Upload documents with a title, description, and department. Files go straight into your organization's queue." },
+              { step: "02", title: "Review & Route", desc: "Managers receive notifications and review documents. Approve, forward, or request changes — all with full context." },
+              { step: "03", title: "Track & Audit", desc: "Every action is logged. Employees always know where their document stands. Admins get a bird's-eye view." },
+            ].map(({ step, title, desc }) => (
+              <div key={step} style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 12, padding: 32, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#6b7280", letterSpacing: "0.06em", marginBottom: 16 }}>STEP {step}</div>
+                <h3 style={{ fontSize: 22, fontWeight: 600, color: "#111111", marginBottom: 12, letterSpacing: "-0.3px" }}>{title}</h3>
+                <p style={{ fontSize: 15, color: "#6b7280", lineHeight: 1.6 }}>{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── ACCESS TIERS ── */}
+      <section style={{ padding: "96px 40px", background: "#f5f5f5" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 64 }}>
+            <h2
+              style={{
+                fontSize: "clamp(28px, 4vw, 48px)",
+                fontWeight: 600,
+                lineHeight: 1.1,
+                letterSpacing: "-1.5px",
+                color: "#111111",
+                marginBottom: 16,
+              }}
+            >
+              Access levels for every role
+            </h2>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 24 }}>
+            {[
+              {
+                name: "Employee",
+                desc: "Upload documents and track their status through the approval pipeline.",
+                features: ["Upload documents", "Track status in real-time", "View document history", "AI-powered assistant"],
+                featured: false,
+              },
+              {
+                name: "Manager",
+                desc: "Review, approve, forward or reject documents from your department queue.",
+                features: ["All Employee features", "Review document queue", "Approve & forward docs", "Email notifications"],
+                featured: true,
+              },
+              {
+                name: "Admin",
+                desc: "Full organizational oversight, user management, and audit controls.",
+                features: ["All Manager features", "Manage all users", "Access all documents", "Audit logs & reports"],
+                featured: false,
+              },
+            ].map(({ name, desc, features: tierFeatures, featured }) => (
+              <div
+                key={name}
+                style={{
+                  background: featured ? "#101010" : "#ffffff",
+                  borderRadius: 12,
+                  padding: 32,
+                  border: featured ? "none" : "1px solid #e5e7eb",
+                  boxShadow: featured ? "0 4px 12px rgba(0,0,0,0.12)" : "0 1px 2px rgba(0,0,0,0.05)",
+                }}
+              >
+                <div style={{ fontSize: 22, fontWeight: 600, color: featured ? "#ffffff" : "#111111", letterSpacing: "-0.3px", marginBottom: 10 }}>{name}</div>
+                <p style={{ fontSize: 14, color: featured ? "#a1a1aa" : "#6b7280", lineHeight: 1.6, marginBottom: 24 }}>{desc}</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
+                  {tierFeatures.map((f) => (
+                    <div key={f} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <MdCheckCircle style={{ color: featured ? "#34d399" : "#10b981", fontSize: 16, flexShrink: 0 }} />
+                      <span style={{ fontSize: 14, color: featured ? "#a1a1aa" : "#374151" }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <Link
+                  to="/register"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    padding: "11px 0",
+                    borderRadius: 8,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    textDecoration: "none",
+                    background: featured ? "#ffffff" : "#111111",
+                    color: featured ? "#111111" : "#ffffff",
+                    transition: "opacity 0.15s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
+                  onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                >
+                  Get started
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA BAND ── */}
+      <section style={{ padding: "96px 40px", background: "#ffffff" }}>
+        <div style={{ maxWidth: 640, margin: "0 auto", textAlign: "center" }}>
+          <div
+            style={{
+              background: "#f5f5f5",
+              borderRadius: 12,
+              padding: 48,
+            }}
+          >
+            <h2
+              style={{
+                fontSize: "clamp(24px, 3vw, 36px)",
+                fontWeight: 600,
+                lineHeight: 1.15,
+                letterSpacing: "-1px",
+                color: "#111111",
+                marginBottom: 14,
+              }}
+            >
+              Ready to streamline your document workflows?
+            </h2>
+            <p style={{ fontSize: 16, color: "#6b7280", marginBottom: 28 }}>
+              Join your team on DocTrack today. No credit card required.
+            </p>
+            <Link
+              to="/register"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                color: "#ffffff",
+                background: "#111111",
+                fontSize: 14,
+                fontWeight: 600,
+                padding: "12px 28px",
+                borderRadius: 8,
+                textDecoration: "none",
+                transition: "background 0.15s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#242424")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "#111111")}
+            >
+              Create free account <MdArrowForward />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer
+        style={{
+          background: "#101010",
+          padding: "64px 40px",
+          color: "#a1a1aa",
+        }}
+      >
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 32, marginBottom: 48 }}>
+            {/* brand */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 7, background: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <MdDescription style={{ color: "#111111", fontSize: 15 }} />
+                </div>
+                <span style={{ fontWeight: 600, fontSize: 15, color: "#ffffff", letterSpacing: "-0.3px" }}>DocTrack</span>
+              </div>
+              <p style={{ fontSize: 13, lineHeight: 1.6, color: "#a1a1aa", maxWidth: 200 }}>
+                Document tracking made simple for modern teams.
+              </p>
+            </div>
+
+            {/* product */}
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#ffffff", marginBottom: 14 }}>Product</div>
+              {["Dashboard", "Upload Document", "Document History"].map((l) => (
+                <div key={l} style={{ marginBottom: 10 }}>
+                  <Link to="/dashboard" style={{ fontSize: 14, color: "#a1a1aa", textDecoration: "none" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#ffffff")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#a1a1aa")}
+                  >{l}</Link>
+                </div>
+              ))}
+            </div>
+
+            {/* access */}
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#ffffff", marginBottom: 14 }}>Access</div>
+              {["Employee Portal", "Manager Review", "Admin Panel"].map((l) => (
+                <div key={l} style={{ marginBottom: 10 }}>
+                  <span style={{ fontSize: 14, color: "#a1a1aa" }}>{l}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* company */}
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#ffffff", marginBottom: 14 }}>Account</div>
+              {[{ label: "Sign in", to: "/login" }, { label: "Register", to: "/register" }].map(({ label, to }) => (
+                <div key={label} style={{ marginBottom: 10 }}>
+                  <Link to={to} style={{ fontSize: 14, color: "#a1a1aa", textDecoration: "none" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#ffffff")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#a1a1aa")}
+                  >{label}</Link>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+            <span style={{ fontSize: 13, color: "#898989" }}>© 2026 DocTrack. All rights reserved.</span>
+            <span style={{ fontSize: 13, color: "#898989" }}>Built for organizations that value clarity.</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

@@ -19,10 +19,11 @@ const Sidebar = () => {
         left: 0,
         top: 56,
         height: "calc(100vh - 56px)",
-        width: 224,
-        background: "#111210",
-        borderRight: "1px solid rgba(125,255,107,0.1)",
+        width: 220,
+        background: "#ffffff",
+        borderRight: "1px solid #e5e7eb",
         paddingTop: 16,
+        fontFamily: "'Inter', sans-serif",
       }}
     >
       <nav>
@@ -36,27 +37,40 @@ const Sidebar = () => {
                 display: "flex",
                 alignItems: "center",
                 gap: 10,
-                padding: "10px 16px",
+                padding: "9px 14px",
                 margin: "2px 10px",
-                borderRadius: 9,
-                fontSize: 13,
-                fontWeight: 500,
+                borderRadius: 8,
+                fontSize: 14,
+                fontWeight: isActive ? 600 : 500,
                 textDecoration: "none",
-                transition: "all 0.15s",
-                background: isActive ? "rgba(125,255,107,0.1)" : "transparent",
-                color: isActive ? "#7DFF6B" : "#697565",
-                border: isActive ? "1px solid rgba(125,255,107,0.2)" : "1px solid transparent",
+                transition: "background 0.15s, color 0.15s",
+                background: isActive ? "#f5f5f5" : "transparent",
+                color: isActive ? "#111111" : "#6b7280",
               })}
             >
               {({ isActive }) => (
                 <>
-                  <Icon style={{ fontSize: 18, color: isActive ? "#7DFF6B" : "#697565" }} />
+                  <Icon style={{ fontSize: 18, color: isActive ? "#111111" : "#6b7280", flexShrink: 0 }} />
                   <span>{label}</span>
                 </>
               )}
             </NavLink>
           ))}
       </nav>
+
+      {/* Bottom divider */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          borderTop: "1px solid #e5e7eb",
+          padding: "14px 20px",
+        }}
+      >
+        <div style={{ fontSize: 11, color: "#898989", letterSpacing: "0.02em" }}>DocTrack v1.0</div>
+      </div>
     </aside>
   );
 };

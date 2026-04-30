@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { MdArrowBack } from "react-icons/md";
+import { MdArrowBack, MdOpenInNew } from "react-icons/md";
 import StatusBadge from "../components/StatusBadge";
 import { useAuth } from "../context/AuthContext";
 import api, { getServerBaseUrl } from "../services/api";
@@ -12,14 +12,30 @@ const formatDate = (s) =>
   new Date(s).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
 const inp = {
-  width: "100%", background: "#181a17", border: "1px solid rgba(125,255,107,0.15)",
-  borderRadius: 8, padding: "9px 12px", color: "#e8e8e4", fontSize: 13,
-  outline: "none", boxSizing: "border-box", appearance: "none", transition: "border-color 0.2s",
+  width: "100%",
+  background: "#ffffff",
+  border: "1px solid #e5e7eb",
+  borderRadius: 8,
+  padding: "9px 12px",
+  color: "#111111",
+  fontSize: 14,
+  outline: "none",
+  boxSizing: "border-box",
+  appearance: "none",
+  transition: "border-color 0.15s",
+  fontFamily: "'Inter', sans-serif",
 };
-const lbl = { color: "#a8b5a4", fontSize: 12, fontWeight: 600, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" };
-const card = { background: "#111210", border: "1px solid rgba(125,255,107,0.1)", borderRadius: 12, padding: 24, marginBottom: 20 };
-const fi = (e) => (e.target.style.borderColor = "rgba(125,255,107,0.45)");
-const fo = (e) => (e.target.style.borderColor = "rgba(125,255,107,0.15)");
+const lbl = { color: "#374151", fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 };
+const card = {
+  background: "#ffffff",
+  border: "1px solid #e5e7eb",
+  borderRadius: 12,
+  padding: 24,
+  marginBottom: 20,
+  boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+};
+const fi = (e) => (e.target.style.borderColor = "#111111");
+const fo = (e) => (e.target.style.borderColor = "#e5e7eb");
 
 const DocumentDetail = () => {
   const { id } = useParams();
@@ -133,23 +149,49 @@ const DocumentDetail = () => {
 
   const spinner = (
     <div style={{ padding: 48, display: "flex", justifyContent: "center" }}>
-      <div style={{ width: 22, height: 22, border: "2px solid rgba(125,255,107,0.2)", borderTopColor: "#7DFF6B", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+      <div style={{ width: 22, height: 22, border: "2px solid #e5e7eb", borderTopColor: "#111111", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
     </div>
   );
 
-  if (loadingDocument) return <div style={{ minHeight: "100%", padding: 24 }}>{spinner}</div>;
-  if (!document) return <div style={{ minHeight: "100%", padding: 24, color: "#697565", fontSize: 14 }}>Unable to load document.</div>;
+  if (loadingDocument) return <div style={{ minHeight: "100%", padding: 28 }}>{spinner}</div>;
+  if (!document) return <div style={{ minHeight: "100%", padding: 28, color: "#6b7280", fontSize: 14, fontFamily: "'Inter', sans-serif" }}>Unable to load document.</div>;
 
   return (
-    <div style={{ minHeight: "100%", padding: 24 }}>
-      <button type="button" onClick={() => navigate("/dashboard")} style={{ display: "flex", alignItems: "center", gap: 6, color: "#697565", background: "transparent", border: "none", fontSize: 13, cursor: "pointer", marginBottom: 20, padding: 0, transition: "color 0.2s" }} onMouseEnter={(e) => (e.currentTarget.style.color = "#7DFF6B")} onMouseLeave={(e) => (e.currentTarget.style.color = "#697565")}>
+    <div style={{ minHeight: "100%", padding: 28, fontFamily: "'Inter', sans-serif" }}>
+
+      {/* Back button */}
+      <button
+        type="button"
+        onClick={() => navigate("/dashboard")}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          color: "#6b7280",
+          background: "transparent",
+          border: "none",
+          fontSize: 14,
+          fontWeight: 500,
+          cursor: "pointer",
+          marginBottom: 24,
+          padding: 0,
+          transition: "color 0.15s",
+          fontFamily: "'Inter', sans-serif",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "#111111")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "#6b7280")}
+      >
         <MdArrowBack style={{ fontSize: 16 }} /> Back to Dashboard
       </button>
 
-      {/* info card */}
+      {/* Document info card */}
       <div style={card}>
-        <h1 style={{ color: "#e8e8e4", fontSize: 18, fontWeight: 700, marginBottom: 20 }}>{document.title}</h1>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 16 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+          <h1 style={{ color: "#111111", fontSize: 20, fontWeight: 600, letterSpacing: "-0.3px" }}>{document.title}</h1>
+          <StatusBadge status={document.workflow?.currentStage || document.status || "Submitted"} />
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 16 }}>
           {[
             { label: "Department", value: document.department || "—" },
             { label: "Assigned To", value: assigneeDisplay },
@@ -157,27 +199,37 @@ const DocumentDetail = () => {
             { label: "Date", value: formatDate(document.createdAt) },
           ].map(({ label, value }) => (
             <div key={label}>
-              <p style={{ color: "#697565", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{label}</p>
-              <p style={{ color: "#a8b5a4", fontSize: 13 }}>{value}</p>
+              <p style={{ color: "#9ca3af", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{label}</p>
+              <p style={{ color: "#374151", fontSize: 14 }}>{value}</p>
             </div>
           ))}
-          <div>
-            <p style={{ color: "#697565", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Status</p>
-            <StatusBadge status={document.workflow?.currentStage || document.status || "Submitted"} />
-          </div>
           {document.fileUrl && (
             <div>
-              <p style={{ color: "#697565", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>File</p>
-              <a href={document.fileUrl.startsWith("http") ? document.fileUrl : `${getServerBaseUrl()}${document.fileUrl}`} target="_blank" rel="noreferrer" style={{ color: "#7DFF6B", fontSize: 13, textDecoration: "underline" }}>View File</a>
+              <p style={{ color: "#9ca3af", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>File</p>
+              <a
+                href={document.fileUrl.startsWith("http") ? document.fileUrl : `${getServerBaseUrl()}${document.fileUrl}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#3b82f6", fontSize: 14, fontWeight: 500, textDecoration: "none" }}
+              >
+                View File <MdOpenInNew style={{ fontSize: 14 }} />
+              </a>
             </div>
           )}
         </div>
+
+        {document.description && (
+          <div style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid #f3f4f6" }}>
+            <p style={{ color: "#9ca3af", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Description</p>
+            <p style={{ color: "#374151", fontSize: 14, lineHeight: 1.6 }}>{document.description}</p>
+          </div>
+        )}
       </div>
 
-      {/* metadata edit */}
+      {/* Metadata edit */}
       {canEditMetadata && (
         <form onSubmit={handleMetadataUpdate} style={card}>
-          <h2 style={{ color: "#e8e8e4", fontSize: 15, fontWeight: 700, marginBottom: 18 }}>Update Document Details</h2>
+          <h2 style={{ color: "#111111", fontSize: 16, fontWeight: 600, letterSpacing: "-0.3px", marginBottom: 18 }}>Update Document Details</h2>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
             <div>
               <label style={lbl}>Title</label>
@@ -185,42 +237,71 @@ const DocumentDetail = () => {
             </div>
             <div>
               <label style={lbl}>Department</label>
-              <select value={department} onChange={(e) => setDepartment(e.target.value)} disabled={!(user?.role === "admin" || user?.role === "manager")} style={{ ...inp, opacity: !(user?.role === "admin" || user?.role === "manager") ? 0.5 : 1 }} onFocus={fi} onBlur={fo}>
-                <option value="" style={{ background: "#181a17" }}>Select Department</option>
-                {DEPARTMENT_OPTIONS.map((d) => <option key={d} value={d} style={{ background: "#181a17" }}>{d}</option>)}
+              <select
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                disabled={!(user?.role === "admin" || user?.role === "manager")}
+                style={{ ...inp, opacity: !(user?.role === "admin" || user?.role === "manager") ? 0.5 : 1 }}
+                onFocus={fi}
+                onBlur={fo}
+              >
+                <option value="">Select Department</option>
+                {DEPARTMENT_OPTIONS.map((d) => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={lbl}>Description</label>
-            <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} style={{ ...inp, resize: "none" }} onFocus={fi} onBlur={fo} />
+            <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} style={{ ...inp, resize: "none", lineHeight: 1.6 }} onFocus={fi} onBlur={fo} />
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={lbl}>Remarks</label>
-            <textarea rows={2} value={remarks} onChange={(e) => setRemarks(e.target.value)} style={{ ...inp, resize: "none" }} onFocus={fi} onBlur={fo} />
+            <textarea rows={2} value={remarks} onChange={(e) => setRemarks(e.target.value)} style={{ ...inp, resize: "none", lineHeight: 1.6 }} onFocus={fi} onBlur={fo} />
           </div>
-          <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom: 20 }}>
             <label style={lbl}>Replace File (Optional)</label>
-            <input type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onChange={(e) => setNewFile(e.target.files?.[0] || null)} style={{ ...inp, padding: "8px 12px" }} />
-            {newFile && <p style={{ color: "#7DFF6B", fontSize: 12, marginTop: 4 }}>Replacing with: {newFile.name}</p>}
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+              onChange={(e) => setNewFile(e.target.files?.[0] || null)}
+              style={{ ...inp, padding: "8px 12px" }}
+            />
+            {newFile && <p style={{ color: "#10b981", fontSize: 13, marginTop: 4, fontWeight: 500 }}>Replacing with: {newFile.name}</p>}
           </div>
-          <button type="submit" disabled={savingMetadata} style={{ background: savingMetadata ? "rgba(125,255,107,0.5)" : "#7DFF6B", color: "#0d0f0c", fontWeight: 700, fontSize: 13, border: "none", borderRadius: 8, padding: "9px 22px", cursor: savingMetadata ? "not-allowed" : "pointer" }}>
+          <button
+            type="submit"
+            disabled={savingMetadata}
+            style={{
+              background: savingMetadata ? "#e5e7eb" : "#111111",
+              color: savingMetadata ? "#9ca3af" : "#ffffff",
+              fontWeight: 600,
+              fontSize: 14,
+              border: "none",
+              borderRadius: 8,
+              padding: "9px 22px",
+              cursor: savingMetadata ? "not-allowed" : "pointer",
+              transition: "background 0.15s",
+              fontFamily: "'Inter', sans-serif",
+            }}
+            onMouseEnter={(e) => { if (!savingMetadata) e.currentTarget.style.background = "#242424"; }}
+            onMouseLeave={(e) => { if (!savingMetadata) e.currentTarget.style.background = "#111111"; }}
+          >
             {savingMetadata ? "Saving…" : "Save Details"}
           </button>
         </form>
       )}
 
-      {/* workflow */}
+      {/* Workflow actions */}
       {canAccessActions && (
         <form onSubmit={handleWorkflowSubmit} style={card}>
-          <h2 style={{ color: "#e8e8e4", fontSize: 15, fontWeight: 700, marginBottom: 18 }}>Workflow Action</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 14, marginBottom: 18 }}>
+          <h2 style={{ color: "#111111", fontSize: 16, fontWeight: 600, letterSpacing: "-0.3px", marginBottom: 18 }}>Workflow Action</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14, marginBottom: 20 }}>
             <div>
               <label style={lbl}>Action</label>
               <select value={action} onChange={(e) => setAction(e.target.value)} style={inp} onFocus={fi} onBlur={fo}>
-                <option value="Approve" style={{ background: "#181a17" }}>Approve</option>
-                <option value="Reject" style={{ background: "#181a17" }}>Reject</option>
-                <option value="Forward" style={{ background: "#181a17" }}>Forward</option>
+                <option value="Approve">Approve</option>
+                <option value="Reject">Reject</option>
+                <option value="Forward">Forward</option>
               </select>
             </div>
             {action === "Forward" && (
@@ -228,46 +309,87 @@ const DocumentDetail = () => {
                 <div>
                   <label style={lbl}>Assign To</label>
                   {loadingUsers ? spinner : (
-                    <select value={assignedTo} onChange={(e) => { const v = e.target.value; setAssignedTo(v); const u = users.find((x) => x._id === v); setTargetDepartment(u?.department || ""); }} style={inp} required onFocus={fi} onBlur={fo}>
-                      <option value="" style={{ background: "#181a17" }}>Select Assignee</option>
-                      {users.map((u) => <option key={u._id} value={u._id} style={{ background: "#181a17" }}>{u.name} ({u.role}){u.department ? ` — ${u.department}` : ""}</option>)}
+                    <select
+                      value={assignedTo}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setAssignedTo(v);
+                        const u = users.find((x) => x._id === v);
+                        setTargetDepartment(u?.department || "");
+                      }}
+                      style={inp}
+                      required
+                      onFocus={fi}
+                      onBlur={fo}
+                    >
+                      <option value="">Select Assignee</option>
+                      {users.map((u) => (
+                        <option key={u._id} value={u._id}>{u.name} ({u.role}){u.department ? ` — ${u.department}` : ""}</option>
+                      ))}
                     </select>
                   )}
                 </div>
                 <div>
                   <label style={lbl}>Target Department</label>
-                  <input type="text" value={targetDepartment} readOnly placeholder="Select assignee first" style={{ ...inp, opacity: 0.6, cursor: "not-allowed" }} required />
+                  <input
+                    type="text"
+                    value={targetDepartment}
+                    readOnly
+                    placeholder="Select assignee first"
+                    style={{ ...inp, opacity: 0.6, cursor: "not-allowed" }}
+                    required
+                  />
                 </div>
               </>
             )}
           </div>
-          <button type="submit" disabled={submittingWorkflow} style={{ background: submittingWorkflow ? "rgba(125,255,107,0.5)" : "#7DFF6B", color: "#0d0f0c", fontWeight: 700, fontSize: 13, border: "none", borderRadius: 8, padding: "9px 22px", cursor: submittingWorkflow ? "not-allowed" : "pointer" }}>
+          <button
+            type="submit"
+            disabled={submittingWorkflow}
+            style={{
+              background: submittingWorkflow ? "#e5e7eb" : "#111111",
+              color: submittingWorkflow ? "#9ca3af" : "#ffffff",
+              fontWeight: 600,
+              fontSize: 14,
+              border: "none",
+              borderRadius: 8,
+              padding: "9px 22px",
+              cursor: submittingWorkflow ? "not-allowed" : "pointer",
+              transition: "background 0.15s",
+              fontFamily: "'Inter', sans-serif",
+            }}
+            onMouseEnter={(e) => { if (!submittingWorkflow) e.currentTarget.style.background = "#242424"; }}
+            onMouseLeave={(e) => { if (!submittingWorkflow) e.currentTarget.style.background = "#111111"; }}
+          >
             {submittingWorkflow ? "Submitting…" : `Submit ${action}`}
           </button>
         </form>
       )}
 
-      {/* history */}
+      {/* Document History */}
       <section>
-        <h2 style={{ color: "#e8e8e4", fontSize: 15, fontWeight: 700, marginBottom: 14 }}>Document History</h2>
-        <div style={{ background: "#111210", border: "1px solid rgba(125,255,107,0.1)", borderRadius: 12, overflow: "hidden" }}>
+        <h2 style={{ color: "#111111", fontSize: 16, fontWeight: 600, letterSpacing: "-0.3px", marginBottom: 14 }}>Document History</h2>
+        <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
           {loadingLogs ? spinner : logs.length === 0 ? (
-            <p style={{ color: "#697565", fontSize: 13, textAlign: "center", padding: 32 }}>No history available</p>
+            <p style={{ color: "#9ca3af", fontSize: 14, textAlign: "center", padding: 32 }}>No history available</p>
           ) : (
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ borderBottom: "1px solid rgba(125,255,107,0.1)" }}>
+                <tr style={{ borderBottom: "1px solid #f3f4f6", background: "#f8f9fa" }}>
                   {["Action", "Updated By", "Timestamp"].map((h) => (
-                    <th key={h} style={{ padding: "12px 16px", color: "#697565", fontSize: 11, fontWeight: 700, textAlign: "left", textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
+                    <th key={h} style={{ padding: "10px 16px", color: "#6b7280", fontSize: 12, fontWeight: 600, textAlign: "left", textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {logs.map((log, i) => (
-                  <tr key={log._id} style={{ borderTop: i > 0 ? "1px solid rgba(125,255,107,0.06)" : "none" }}>
-                    <td style={{ padding: "11px 16px", color: "#e8e8e4", fontSize: 13 }}>{log.action}</td>
-                    <td style={{ padding: "11px 16px", color: "#a8b5a4", fontSize: 13 }}>{log.updatedBy?.name || "—"}</td>
-                    <td style={{ padding: "11px 16px", color: "#697565", fontSize: 12 }}>{formatDate(log.timestamp)}</td>
+                  <tr key={log._id} style={{ borderTop: i > 0 ? "1px solid #f3f4f6" : "none", transition: "background 0.1s" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#f8f9fa")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <td style={{ padding: "12px 16px", color: "#111111", fontSize: 14, fontWeight: 500 }}>{log.action}</td>
+                    <td style={{ padding: "12px 16px", color: "#374151", fontSize: 14 }}>{log.updatedBy?.name || "—"}</td>
+                    <td style={{ padding: "12px 16px", color: "#9ca3af", fontSize: 13 }}>{formatDate(log.timestamp)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -275,6 +397,7 @@ const DocumentDetail = () => {
           )}
         </div>
       </section>
+
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );

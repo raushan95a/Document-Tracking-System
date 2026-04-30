@@ -5,18 +5,18 @@ import { MdDescription, MdLockOutline, MdMailOutline } from "react-icons/md";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
-/* shared input style */
 const inputStyle = {
   width: "100%",
-  background: "#181a17",
-  border: "1px solid rgba(125,255,107,0.15)",
+  background: "#ffffff",
+  border: "1px solid #e5e7eb",
   borderRadius: 8,
   padding: "10px 12px",
-  color: "#e8e8e4",
-  fontSize: 13,
+  color: "#111111",
+  fontSize: 14,
   outline: "none",
   boxSizing: "border-box",
-  transition: "border-color 0.2s",
+  transition: "border-color 0.15s",
+  fontFamily: "'Inter', sans-serif",
 };
 
 const Login = () => {
@@ -33,19 +33,16 @@ const Login = () => {
     setLoading(true);
     try {
       if (!showOTP) {
-        // Step 1: Initial Login
         const response = await api.post("/auth/login", { email, password });
         if (response.data.otpRequired) {
           setShowOTP(true);
           toast.success("OTP sent to your email!");
         } else {
-          // Fallback if OTP is not enabled for some reason
           const { token, ...userData } = response.data;
           login(userData, token);
           navigate("/dashboard");
         }
       } else {
-        // Step 2: OTP Verification
         const response = await api.post("/auth/verify-otp", { email, otp });
         const { token, ...userData } = response.data;
         login(userData, token);
@@ -64,54 +61,57 @@ const Login = () => {
     <div
       style={{
         minHeight: "100vh",
-        background: "#0d0f0c",
+        background: "#f8f9fa",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         padding: 16,
+        fontFamily: "'Inter', sans-serif",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 380 }}>
-        {/* logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 32, justifyContent: "center" }}>
+      <div style={{ width: "100%", maxWidth: 400 }}>
+
+        {/* Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 32, justifyContent: "center" }}>
           <div
             style={{
-              width: 34,
-              height: 34,
+              width: 32,
+              height: 32,
               borderRadius: 9,
-              background: "#7DFF6B",
+              background: "#111111",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <MdDescription style={{ color: "#0d0f0c", fontSize: 20 }} />
+            <MdDescription style={{ color: "#ffffff", fontSize: 18 }} />
           </div>
-          <span style={{ color: "#e8e8e4", fontWeight: 700, fontSize: 18 }}>DocTrack</span>
+          <span style={{ color: "#111111", fontWeight: 600, fontSize: 18, letterSpacing: "-0.3px" }}>DocTrack</span>
         </div>
 
-        {/* card */}
+        {/* Card */}
         <div
           style={{
-            background: "#111210",
-            border: "1px solid rgba(125,255,107,0.12)",
-            borderRadius: 14,
+            background: "#ffffff",
+            border: "1px solid #e5e7eb",
+            borderRadius: 12,
             padding: "32px 28px",
+            boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
           }}
         >
-          <h1 style={{ color: "#e8e8e4", fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
+          <h1 style={{ color: "#111111", fontSize: 22, fontWeight: 600, letterSpacing: "-0.3px", marginBottom: 6 }}>
             Welcome back
           </h1>
-          <p style={{ color: "#697565", fontSize: 13, marginBottom: 28 }}>
-            {showOTP ? "Please enter the 6-digit code sent to your email" : "Sign in to your DocTrack account"}
+          <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 28 }}>
+            {showOTP ? "Enter the 6-digit code sent to your email" : "Sign in to your DocTrack account"}
           </p>
 
           <form onSubmit={handleSubmit}>
             {!showOTP ? (
               <>
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ color: "#a8b5a4", fontSize: 12, fontWeight: 600, display: "block", marginBottom: 6 }}>
-                    EMAIL
+                  <label style={{ color: "#374151", fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>
+                    Email
                   </label>
                   <div style={{ position: "relative" }}>
                     <MdMailOutline
@@ -120,7 +120,7 @@ const Login = () => {
                         left: 11,
                         top: "50%",
                         transform: "translateY(-50%)",
-                        color: "#697565",
+                        color: "#9ca3af",
                         fontSize: 16,
                         pointerEvents: "none",
                       }}
@@ -132,15 +132,15 @@ const Login = () => {
                       style={{ ...inputStyle, paddingLeft: 34 }}
                       placeholder="you@example.com"
                       required
-                      onFocus={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.45)")}
-                      onBlur={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.15)")}
+                      onFocus={(e) => (e.target.style.borderColor = "#111111")}
+                      onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
                     />
                   </div>
                 </div>
 
                 <div style={{ marginBottom: 24 }}>
-                  <label style={{ color: "#a8b5a4", fontSize: 12, fontWeight: 600, display: "block", marginBottom: 6 }}>
-                    PASSWORD
+                  <label style={{ color: "#374151", fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>
+                    Password
                   </label>
                   <div style={{ position: "relative" }}>
                     <MdLockOutline
@@ -149,7 +149,7 @@ const Login = () => {
                         left: 11,
                         top: "50%",
                         transform: "translateY(-50%)",
-                        color: "#697565",
+                        color: "#9ca3af",
                         fontSize: 16,
                         pointerEvents: "none",
                       }}
@@ -161,16 +161,16 @@ const Login = () => {
                       style={{ ...inputStyle, paddingLeft: 34 }}
                       placeholder="••••••••"
                       required
-                      onFocus={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.45)")}
-                      onBlur={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.15)")}
+                      onFocus={(e) => (e.target.style.borderColor = "#111111")}
+                      onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
                     />
                   </div>
                 </div>
               </>
             ) : (
               <div style={{ marginBottom: 24 }}>
-                <label style={{ color: "#a8b5a4", fontSize: 12, fontWeight: 600, display: "block", marginBottom: 6 }}>
-                  VERIFICATION CODE
+                <label style={{ color: "#374151", fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>
+                  Verification Code
                 </label>
                 <input
                   type="text"
@@ -181,8 +181,8 @@ const Login = () => {
                   maxLength={6}
                   required
                   autoFocus
-                  onFocus={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.45)")}
-                  onBlur={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.15)")}
+                  onFocus={(e) => (e.target.style.borderColor = "#111111")}
+                  onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
                 />
                 <button
                   type="button"
@@ -190,14 +190,15 @@ const Login = () => {
                   style={{
                     background: "none",
                     border: "none",
-                    color: "#697565",
-                    fontSize: 12,
+                    color: "#6b7280",
+                    fontSize: 13,
                     marginTop: 10,
                     cursor: "pointer",
-                    textDecoration: "underline",
+                    fontFamily: "'Inter', sans-serif",
+                    padding: 0,
                   }}
                 >
-                  Back to login
+                  ← Back to login
                 </button>
               </div>
             )}
@@ -207,26 +208,27 @@ const Login = () => {
               disabled={loading}
               style={{
                 width: "100%",
-                background: loading ? "rgba(125,255,107,0.5)" : "#7DFF6B",
-                color: "#0d0f0c",
-                fontWeight: 700,
+                background: loading ? "#e5e7eb" : "#111111",
+                color: loading ? "#9ca3af" : "#ffffff",
+                fontWeight: 600,
                 fontSize: 14,
                 border: "none",
-                borderRadius: 9,
+                borderRadius: 8,
                 padding: "11px 0",
                 cursor: loading ? "not-allowed" : "pointer",
-                transition: "background 0.2s",
+                transition: "background 0.15s",
+                fontFamily: "'Inter', sans-serif",
               }}
-              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "#9bffaa"; }}
-              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.background = "#7DFF6B"; }}
+              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "#242424"; }}
+              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.background = "#111111"; }}
             >
-              {loading ? (showOTP ? "Verifying…" : "Signing in…") : (showOTP ? "Verify OTP" : "Sign In")}
+              {loading ? (showOTP ? "Verifying…" : "Signing in…") : (showOTP ? "Verify OTP" : "Sign in")}
             </button>
           </form>
 
-          <p style={{ color: "#697565", fontSize: 13, marginTop: 22, textAlign: "center" }}>
+          <p style={{ color: "#6b7280", fontSize: 14, marginTop: 22, textAlign: "center" }}>
             Don&apos;t have an account?{" "}
-            <Link to="/register" style={{ color: "#7DFF6B", textDecoration: "none", fontWeight: 600 }}>
+            <Link to="/register" style={{ color: "#111111", textDecoration: "none", fontWeight: 600 }}>
               Create one
             </Link>
           </p>

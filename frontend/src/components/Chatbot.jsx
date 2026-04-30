@@ -5,7 +5,6 @@ import { useLocation, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import api from "../services/api";
 
-
 const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -18,7 +17,6 @@ const Chatbot = () => {
   const location = useLocation();
   const { id } = useParams();
 
-  // Fetch document context if we are on a document detail page
   useEffect(() => {
     const fetchContext = async () => {
       if (location.pathname.startsWith("/documents/") && id) {
@@ -43,7 +41,6 @@ const Chatbot = () => {
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
-
     const userMessage = input.trim();
     setInput("");
     setMessages((prev) => [...prev, { role: "user", text: userMessage }]);
@@ -51,7 +48,6 @@ const Chatbot = () => {
 
     try {
       const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-
       let systemPrompt = "You are a helpful assistant for a Document Tracking System. ";
       if (docContext) {
         systemPrompt += `You are currently helping with a document titled "${docContext.title}". 
@@ -67,7 +63,6 @@ const Chatbot = () => {
       }
       systemPrompt += "\nKeep your answers concise and professional. Use Markdown for formatting (bold, lists, etc.) to make the information easy to read.";
 
-
       const model = genAI.getGenerativeModel({
         model: "gemini-3.1-flash-lite-preview",
         systemInstruction: systemPrompt,
@@ -78,14 +73,11 @@ const Chatbot = () => {
           role: m.role === "assistant" ? "model" : "user",
           parts: [{ text: m.text }],
         })),
-        generationConfig: {
-          maxOutputTokens: 500,
-        },
+        generationConfig: { maxOutputTokens: 500 },
       });
 
       const result = await chat.sendMessage(userMessage);
       const responseText = result.response.text();
-
       setMessages((prev) => [...prev, { role: "assistant", text: responseText }]);
     } catch (error) {
       console.error("Gemini Error:", error);
@@ -93,46 +85,49 @@ const Chatbot = () => {
       if (error.message?.includes("API_KEY_INVALID")) {
         errorMessage = "Invalid Gemini API key. Please check your .env file.";
       } else if (error.message?.includes("model not found")) {
-        errorMessage = `The AI model '${import.meta.env.VITE_GEMINI_MODEL || "gemini-3.1-flash-lite-preview"}' was not found.`;
+        errorMessage = `The AI model was not found.`;
       } else if (!import.meta.env.VITE_GEMINI_API_KEY) {
         errorMessage = "VITE_GEMINI_API_KEY is missing from your environment variables.";
       } else {
         errorMessage = `Error: ${error.message || "Unknown error occurred"}`;
       }
-
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", text: errorMessage },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", text: errorMessage }]);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 1000, fontFamily: "inherit" }}>
+    <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 1000, fontFamily: "'Inter', sans-serif" }}>
+
       {/* Toggle Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
           style={{
-            width: 56,
-            height: 56,
+            width: 52,
+            height: 52,
             borderRadius: "50%",
-            background: "#7DFF6B",
-            color: "#0d0f0c",
+            background: "#111111",
+            color: "#ffffff",
             border: "none",
-            boxShadow: "0 4px 12px rgba(125, 255, 107, 0.3)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            transition: "transform 0.2s, background 0.2s",
+            transition: "background 0.15s, transform 0.15s",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#242424";
+            e.currentTarget.style.transform = "scale(1.05)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#111111";
+            e.currentTarget.style.transform = "scale(1)";
+          }}
         >
-          <MdChat size={28} />
+          <MdChat size={24} />
         </button>
       )}
 
@@ -142,22 +137,22 @@ const Chatbot = () => {
           style={{
             width: 360,
             height: 500,
-            background: "#111210",
-            border: "1px solid rgba(125,255,107,0.2)",
+            background: "#ffffff",
+            border: "1px solid #e5e7eb",
             borderRadius: 16,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
-            animation: "slideIn 0.3s ease-out",
+            animation: "slideIn 0.25s ease-out",
           }}
         >
           {/* Header */}
           <div
             style={{
-              padding: "16px 20px",
-              background: "rgba(125,255,107,0.05)",
-              borderBottom: "1px solid rgba(125,255,107,0.1)",
+              padding: "14px 18px",
+              background: "#f8f9fa",
+              borderBottom: "1px solid #e5e7eb",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
@@ -168,26 +163,37 @@ const Chatbot = () => {
                 style={{
                   width: 32,
                   height: 32,
-                  background: "#7DFF6B",
+                  background: "#111111",
                   borderRadius: "50%",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: "#0d0f0c",
+                  color: "#ffffff",
                 }}
               >
-                <MdSmartToy size={20} />
+                <MdSmartToy size={18} />
               </div>
               <div>
-                <h3 style={{ color: "#e8e8e4", fontSize: 14, fontWeight: 700, margin: 0 }}>DocBot AI</h3>
-                <span style={{ color: "#7DFF6B", fontSize: 10, fontWeight: 600 }}>Your helping assistant</span>
+                <h3 style={{ color: "#111111", fontSize: 14, fontWeight: 600, margin: 0 }}>DocBot AI</h3>
+                <span style={{ color: "#10b981", fontSize: 11, fontWeight: 500 }}>● Online</span>
               </div>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              style={{ background: "transparent", border: "none", color: "#697565", cursor: "pointer" }}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#6b7280",
+                cursor: "pointer",
+                display: "flex",
+                padding: 4,
+                borderRadius: 6,
+                transition: "background 0.15s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
-              <MdClose size={20} />
+              <MdClose size={18} />
             </button>
           </div>
 
@@ -196,11 +202,12 @@ const Chatbot = () => {
             ref={scrollRef}
             style={{
               flex: 1,
-              padding: 20,
+              padding: 16,
               overflowY: "auto",
               display: "flex",
               flexDirection: "column",
-              gap: 16,
+              gap: 12,
+              background: "#ffffff",
             }}
           >
             {messages.map((msg, i) => (
@@ -209,35 +216,35 @@ const Chatbot = () => {
                 style={{
                   alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
                   maxWidth: "85%",
-                  background: msg.role === "user" ? "#7DFF6B" : "rgba(255,255,255,0.05)",
-                  color: msg.role === "user" ? "#0d0f0c" : "#e8e8e4",
-                  padding: "12px 16px",
-                  borderRadius: msg.role === "user" ? "16px 16px 2px 16px" : "16px 16px 16px 2px",
-                  fontSize: "13px",
-                  lineHeight: "1.6",
+                  background: msg.role === "user" ? "#111111" : "#f5f5f5",
+                  color: msg.role === "user" ? "#ffffff" : "#111111",
+                  padding: "10px 14px",
+                  borderRadius: msg.role === "user" ? "14px 14px 2px 14px" : "14px 14px 14px 2px",
+                  fontSize: 13,
+                  lineHeight: 1.6,
                 }}
               >
                 {msg.role === "assistant" ? (
-                  <div className="markdown-content">
+                  <div className="chatbot-markdown">
                     <ReactMarkdown>{msg.text}</ReactMarkdown>
                   </div>
                 ) : (
                   msg.text
                 )}
               </div>
-
             ))}
+
             {loading && (
-              <div style={{ alignSelf: "flex-start", display: "flex", gap: 4 }}>
+              <div style={{ alignSelf: "flex-start", display: "flex", gap: 4, padding: "10px 14px", background: "#f5f5f5", borderRadius: "14px 14px 14px 2px" }}>
                 {[0, 1, 2].map((dot) => (
                   <div
                     key={dot}
                     style={{
                       width: 6,
                       height: 6,
-                      background: "#7DFF6B",
+                      background: "#9ca3af",
                       borderRadius: "50%",
-                      animation: `bounce 0.6s infinite ${dot * 0.1}s`,
+                      animation: `bounce 0.6s infinite ${dot * 0.12}s`,
                     }}
                   />
                 ))}
@@ -246,24 +253,28 @@ const Chatbot = () => {
           </div>
 
           {/* Input */}
-          <div style={{ padding: 16, borderTop: "1px solid rgba(125,255,107,0.1)" }}>
+          <div style={{ padding: "12px 14px", borderTop: "1px solid #e5e7eb", background: "#ffffff" }}>
             <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Ask something..."
+                placeholder="Ask something…"
                 style={{
                   width: "100%",
-                  background: "#181a17",
-                  border: "1px solid rgba(125,255,107,0.15)",
-                  borderRadius: 24,
-                  padding: "10px 44px 10px 16px",
-                  color: "#e8e8e4",
+                  background: "#f5f5f5",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 8,
+                  padding: "9px 42px 9px 14px",
+                  color: "#111111",
                   fontSize: 13,
                   outline: "none",
+                  fontFamily: "'Inter', sans-serif",
+                  transition: "border-color 0.15s",
                 }}
+                onFocus={(e) => (e.target.style.borderColor = "#111111")}
+                onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
               />
               <button
                 onClick={handleSend}
@@ -271,20 +282,22 @@ const Chatbot = () => {
                 style={{
                   position: "absolute",
                   right: 6,
-                  width: 32,
-                  height: 32,
-                  background: input.trim() && !loading ? "#7DFF6B" : "transparent",
-                  color: input.trim() && !loading ? "#0d0f0c" : "#697565",
+                  width: 30,
+                  height: 30,
+                  background: input.trim() && !loading ? "#111111" : "#e5e7eb",
+                  color: input.trim() && !loading ? "#ffffff" : "#9ca3af",
                   border: "none",
-                  borderRadius: "50%",
-                  cursor: "pointer",
+                  borderRadius: 6,
+                  cursor: input.trim() && !loading ? "pointer" : "default",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  transition: "all 0.2s",
+                  transition: "background 0.15s",
                 }}
+                onMouseEnter={(e) => { if (input.trim() && !loading) e.currentTarget.style.background = "#242424"; }}
+                onMouseLeave={(e) => { if (input.trim() && !loading) e.currentTarget.style.background = "#111111"; }}
               >
-                <MdSend size={18} />
+                <MdSend size={15} />
               </button>
             </div>
           </div>
@@ -293,20 +306,20 @@ const Chatbot = () => {
 
       <style>{`
         @keyframes slideIn {
-          from { opacity: 0; transform: translateY(20px); }
+          from { opacity: 0; transform: translateY(16px); }
           to { opacity: 1; transform: translateY(0); }
         }
         @keyframes bounce {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-4px); }
         }
-        .markdown-content p { margin: 0 0 8px 0; }
-        .markdown-content p:last-child { margin-bottom: 0; }
-        .markdown-content ul, .markdown-content ol { margin: 8px 0; padding-left: 20px; }
-        .markdown-content li { margin-bottom: 4px; }
-        .markdown-content strong { color: #7DFF6B; }
+        .chatbot-markdown p { margin: 0 0 8px 0; }
+        .chatbot-markdown p:last-child { margin-bottom: 0; }
+        .chatbot-markdown ul, .chatbot-markdown ol { margin: 8px 0; padding-left: 18px; }
+        .chatbot-markdown li { margin-bottom: 3px; }
+        .chatbot-markdown strong { color: #111111; font-weight: 600; }
+        .chatbot-markdown code { background: #e5e7eb; border-radius: 4px; padding: 1px 5px; font-size: 12px; }
       `}</style>
-
     </div>
   );
 };
