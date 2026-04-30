@@ -7,50 +7,55 @@ const Sidebar = () => {
   const { user } = useAuth();
 
   const links = [
-    {
-      to: "/dashboard",
-      label: "Dashboard",
-      icon: MdDashboard,
-      show: true,
-    },
-    {
-      to: "/upload",
-      label: "Upload Document",
-      icon: MdUploadFile,
-      show: true,
-    },
-    {
-      to: "/admin",
-      label: "Admin Panel",
-      icon: MdAdminPanelSettings,
-      show: user?.role === "admin",
-    },
+    { to: "/dashboard", label: "Dashboard", icon: MdDashboard, show: true },
+    { to: "/upload", label: "Upload Document", icon: MdUploadFile, show: true },
+    { to: "/admin", label: "Admin Panel", icon: MdAdminPanelSettings, show: user?.role === "admin" },
   ];
 
   return (
-    <aside className="fixed left-0 top-14 h-[calc(100vh-3.5rem)] w-56 bg-sage text-cream pt-4">
-      <nav className="space-y-0.5">
+    <aside
+      style={{
+        position: "fixed",
+        left: 0,
+        top: 56,
+        height: "calc(100vh - 56px)",
+        width: 224,
+        background: "#111210",
+        borderRight: "1px solid rgba(125,255,107,0.1)",
+        paddingTop: 16,
+      }}
+    >
+      <nav>
         {links
-          .filter((link) => link.show)
-          .map((link) => {
-            const Icon = link.icon;
-
-            return (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                className={({ isActive }) =>
-                  [
-                    "flex items-center gap-3 px-4 py-2.5 rounded-lg mx-2 my-0.5 text-sm transition",
-                    isActive ? "bg-dark text-cream" : "text-cream/80 hover:bg-dark/40",
-                  ].join(" ")
-                }
-              >
-                <Icon className="text-lg" />
-                <span>{link.label}</span>
-              </NavLink>
-            );
-          })}
+          .filter((l) => l.show)
+          .map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              style={({ isActive }) => ({
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 16px",
+                margin: "2px 10px",
+                borderRadius: 9,
+                fontSize: 13,
+                fontWeight: 500,
+                textDecoration: "none",
+                transition: "all 0.15s",
+                background: isActive ? "rgba(125,255,107,0.1)" : "transparent",
+                color: isActive ? "#7DFF6B" : "#697565",
+                border: isActive ? "1px solid rgba(125,255,107,0.2)" : "1px solid transparent",
+              })}
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon style={{ fontSize: 18, color: isActive ? "#7DFF6B" : "#697565" }} />
+                  <span>{label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
       </nav>
     </aside>
   );

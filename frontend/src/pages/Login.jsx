@@ -1,8 +1,23 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { MdDescription, MdLockOutline, MdMailOutline } from "react-icons/md";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
+
+/* shared input style */
+const inputStyle = {
+  width: "100%",
+  background: "#181a17",
+  border: "1px solid rgba(125,255,107,0.15)",
+  borderRadius: 8,
+  padding: "10px 12px",
+  color: "#e8e8e4",
+  fontSize: 13,
+  outline: "none",
+  boxSizing: "border-box",
+  transition: "border-color 0.2s",
+};
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,11 +29,9 @@ const Login = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setLoading(true);
-
     try {
       const response = await api.post("/auth/login", { email, password });
       const { token, ...userData } = response.data;
-
       login(userData, token);
       navigate("/dashboard");
     } catch (error) {
@@ -30,49 +43,139 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cream flex items-center justify-center px-4">
-      <div className="bg-cream border border-sage/30 rounded-lg shadow-sm p-8 w-full max-w-sm">
-        <h1 className="text-darkest text-2xl font-semibold">Welcome Back</h1>
-        <p className="text-sage text-sm mt-1 mb-6">Sign in to DocTrack</p>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-dark font-medium mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-dark font-medium mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-dark text-cream py-2 rounded hover:bg-darkest font-medium text-sm mt-4 disabled:opacity-70"
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#0d0f0c",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: 380 }}>
+        {/* logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 32, justifyContent: "center" }}>
+          <div
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 9,
+              background: "#7DFF6B",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
           >
-            {loading ? "Loading..." : "Sign In"}
-          </button>
-        </form>
+            <MdDescription style={{ color: "#0d0f0c", fontSize: 20 }} />
+          </div>
+          <span style={{ color: "#e8e8e4", fontWeight: 700, fontSize: 18 }}>DocTrack</span>
+        </div>
 
-        <p className="text-sage text-sm mt-6">
-          Don&apos;t have an account?{" "}
-          <Link to="/register" className="text-dark underline">
-            Register
-          </Link>
-        </p>
+        {/* card */}
+        <div
+          style={{
+            background: "#111210",
+            border: "1px solid rgba(125,255,107,0.12)",
+            borderRadius: 14,
+            padding: "32px 28px",
+          }}
+        >
+          <h1 style={{ color: "#e8e8e4", fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
+            Welcome back
+          </h1>
+          <p style={{ color: "#697565", fontSize: 13, marginBottom: 28 }}>
+            Sign in to your DocTrack account
+          </p>
+
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ color: "#a8b5a4", fontSize: 12, fontWeight: 600, display: "block", marginBottom: 6 }}>
+                EMAIL
+              </label>
+              <div style={{ position: "relative" }}>
+                <MdMailOutline
+                  style={{
+                    position: "absolute",
+                    left: 11,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "#697565",
+                    fontSize: 16,
+                    pointerEvents: "none",
+                  }}
+                />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={{ ...inputStyle, paddingLeft: 34 }}
+                  placeholder="you@example.com"
+                  required
+                  onFocus={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.45)")}
+                  onBlur={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.15)")}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ color: "#a8b5a4", fontSize: 12, fontWeight: 600, display: "block", marginBottom: 6 }}>
+                PASSWORD
+              </label>
+              <div style={{ position: "relative" }}>
+                <MdLockOutline
+                  style={{
+                    position: "absolute",
+                    left: 11,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "#697565",
+                    fontSize: 16,
+                    pointerEvents: "none",
+                  }}
+                />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={{ ...inputStyle, paddingLeft: 34 }}
+                  placeholder="••••••••"
+                  required
+                  onFocus={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.45)")}
+                  onBlur={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.15)")}
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: "100%",
+                background: loading ? "rgba(125,255,107,0.5)" : "#7DFF6B",
+                color: "#0d0f0c",
+                fontWeight: 700,
+                fontSize: 14,
+                border: "none",
+                borderRadius: 9,
+                padding: "11px 0",
+                cursor: loading ? "not-allowed" : "pointer",
+                transition: "background 0.2s",
+              }}
+              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "#9bffaa"; }}
+              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.background = "#7DFF6B"; }}
+            >
+              {loading ? "Signing in…" : "Sign In"}
+            </button>
+          </form>
+
+          <p style={{ color: "#697565", fontSize: 13, marginTop: 22, textAlign: "center" }}>
+            Don&apos;t have an account?{" "}
+            <Link to="/register" style={{ color: "#7DFF6B", textDecoration: "none", fontWeight: 600 }}>
+              Create one
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { MdInbox } from "react-icons/md";
+import { MdInbox, MdUploadFile } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -17,6 +17,19 @@ const formatDate = (dateString) =>
     year: "numeric",
   });
 
+const inputStyle = {
+  width: "100%",
+  background: "#181a17",
+  border: "1px solid rgba(125,255,107,0.15)",
+  borderRadius: 8,
+  padding: "8px 12px",
+  color: "#e8e8e4",
+  fontSize: 13,
+  outline: "none",
+  boxSizing: "border-box",
+  appearance: "none",
+};
+
 const Dashboard = () => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,203 +40,224 @@ const Dashboard = () => {
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
-
-    if (filters.search) {
-      params.set("search", filters.search);
-    }
-
-    if (filters.status) {
-      params.set("status", filters.status);
-    }
-
-    if (filters.department && user?.role !== "manager") {
-      params.set("department", filters.department);
-    }
-
+    if (filters.search) params.set("search", filters.search);
+    if (filters.status) params.set("status", filters.status);
+    if (filters.department && user?.role !== "manager") params.set("department", filters.department);
     return params.toString();
   }, [filters.department, filters.search, filters.status, user?.role]);
 
   useEffect(() => {
-    if (user?.role === "manager") {
-      dispatch(resetDashboardFilters());
-    }
+    if (user?.role === "manager") dispatch(resetDashboardFilters());
   }, [dispatch, user?.role]);
 
   const fetchDocuments = useCallback(
     async (showLoader = true) => {
-      if (showLoader) {
-        setLoading(true);
-      }
-
+      if (showLoader) setLoading(true);
       try {
         const endpoint = queryString ? `/documents?${queryString}` : "/documents";
         const response = await api.get(endpoint);
         setDocuments(response.data || []);
       } catch (error) {
-        const message = error?.response?.data?.message || "Failed to fetch documents";
-        toast.error(message);
+        toast.error(error?.response?.data?.message || "Failed to fetch documents");
       } finally {
-        if (showLoader) {
-          setLoading(false);
-        }
+        if (showLoader) setLoading(false);
       }
     },
     [queryString]
   );
 
-  useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments]);
+  useEffect(() => { fetchDocuments(); }, [fetchDocuments]);
 
   useEffect(() => {
-    if (!token) {
-      return undefined;
-    }
-
+    if (!token) return undefined;
     const socket = getSocket(token);
-
-    if (!socket) {
-      return undefined;
-    }
-
-    const handleDocumentsUpdated = () => {
-      fetchDocuments(false);
-    };
-
-    socket.on("documents:updated", handleDocumentsUpdated);
-
-    return () => {
-      socket.off("documents:updated", handleDocumentsUpdated);
-    };
+    if (!socket) return undefined;
+    const handler = () => fetchDocuments(false);
+    socket.on("documents:updated", handler);
+    return () => socket.off("documents:updated", handler);
   }, [fetchDocuments, token]);
 
-  const titleMap = {
-    employee: "My Documents",
-    manager: "Pending Reviews",
-    admin: "All Documents",
-  };
-
+  const titleMap = { employee: "My Documents", manager: "Pending Reviews", admin: "All Documents" };
   const title = titleMap[user?.role] || "Documents";
 
   return (
-    <div className="bg-cream min-h-full p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-darkest text-xl font-semibold">{title}</h1>
+    <div style={{ minHeight: "100%", padding: 24 }}>
+      {/* header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <h1 style={{ color: "#e8e8e4", fontSize: 20, fontWeight: 700 }}>{title}</h1>
         <button
           type="button"
           onClick={() => navigate("/upload")}
-          className="bg-dark text-cream px-4 py-2 rounded hover:bg-darkest text-sm"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            background: "#7DFF6B",
+            color: "#0d0f0c",
+            fontWeight: 700,
+            fontSize: 13,
+            border: "none",
+            borderRadius: 8,
+            padding: "8px 16px",
+            cursor: "pointer",
+            transition: "background 0.2s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "#9bffaa")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "#7DFF6B")}
         >
+          <MdUploadFile style={{ fontSize: 16 }} />
           Upload Document
         </button>
       </div>
 
-      <div className="bg-cream border border-sage/20 rounded-lg p-4 shadow-sm mb-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      {/* filters */}
+      <div
+        style={{
+          background: "#111210",
+          border: "1px solid rgba(125,255,107,0.1)",
+          borderRadius: 10,
+          padding: 16,
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr auto", gap: 10 }}>
           <input
             type="text"
             value={filters.search}
-            placeholder="Search title/description"
-            onChange={(event) =>
-              dispatch(
-                setDashboardFilters({
-                  search: event.target.value,
-                })
-              )
-            }
-            className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
+            placeholder="Search title / description…"
+            onChange={(e) => dispatch(setDashboardFilters({ search: e.target.value }))}
+            style={inputStyle}
+            onFocus={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.4)")}
+            onBlur={(e) => (e.target.style.borderColor = "rgba(125,255,107,0.15)")}
           />
-
           <select
             value={filters.status}
-            onChange={(event) =>
-              dispatch(
-                setDashboardFilters({
-                  status: event.target.value,
-                })
-              )
-            }
-            className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
+            onChange={(e) => dispatch(setDashboardFilters({ status: e.target.value }))}
+            style={inputStyle}
           >
-            <option value="">All Statuses</option>
-            <option value="Submitted">Submitted</option>
-            <option value="Under Review">Under Review</option>
-            <option value="Approved">Approved</option>
-            <option value="Rejected">Rejected</option>
+            <option value="" style={{ background: "#181a17" }}>All Statuses</option>
+            {["Submitted", "Under Review", "Approved", "Rejected"].map((s) => (
+              <option key={s} value={s} style={{ background: "#181a17" }}>{s}</option>
+            ))}
           </select>
-
           <select
             value={filters.department}
             disabled={user?.role === "manager"}
-            onChange={(event) =>
-              dispatch(
-                setDashboardFilters({
-                  department: event.target.value,
-                })
-              )
-            }
-            className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm disabled:opacity-70"
+            onChange={(e) => dispatch(setDashboardFilters({ department: e.target.value }))}
+            style={{ ...inputStyle, opacity: user?.role === "manager" ? 0.5 : 1 }}
           >
-            <option value="">All Departments</option>
-            {DEPARTMENT_OPTIONS.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
+            <option value="" style={{ background: "#181a17" }}>All Departments</option>
+            {DEPARTMENT_OPTIONS.map((d) => (
+              <option key={d} value={d} style={{ background: "#181a17" }}>{d}</option>
             ))}
           </select>
-
           <button
             type="button"
             onClick={() => dispatch(resetDashboardFilters())}
-            className="border border-sage text-sage px-4 py-2 rounded hover:bg-sage hover:text-cream text-sm"
+            style={{
+              background: "transparent",
+              border: "1px solid rgba(125,255,107,0.2)",
+              color: "#7DFF6B",
+              borderRadius: 8,
+              padding: "8px 14px",
+              fontSize: 13,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(125,255,107,0.08)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           >
-            Clear Filters
+            Clear
           </button>
         </div>
       </div>
 
-      <div className="bg-cream border border-sage/20 rounded-lg overflow-hidden shadow-sm">
+      {/* table */}
+      <div
+        style={{
+          background: "#111210",
+          border: "1px solid rgba(125,255,107,0.1)",
+          borderRadius: 10,
+          overflow: "hidden",
+        }}
+      >
         {loading ? (
-          <div className="py-10">
-            <div className="animate-spin border-2 border-dark border-t-transparent rounded-full w-5 h-5 mx-auto" />
+          <div style={{ padding: 48, display: "flex", justifyContent: "center" }}>
+            <div
+              style={{
+                width: 22,
+                height: 22,
+                border: "2px solid rgba(125,255,107,0.2)",
+                borderTopColor: "#7DFF6B",
+                borderRadius: "50%",
+                animation: "spin 0.7s linear infinite",
+              }}
+            />
           </div>
         ) : documents.length === 0 ? (
-          <div className="flex flex-col items-center py-12 text-sage text-sm">
-            <MdInbox className="text-4xl mb-2" />
-            <span>No documents found</span>
+          <div style={{ padding: 52, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, color: "#697565" }}>
+            <MdInbox style={{ fontSize: 36 }} />
+            <span style={{ fontSize: 14 }}>No documents found</span>
           </div>
         ) : (
-          <table className="w-full border-collapse">
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr className="bg-dark text-cream text-sm font-medium text-left">
-                <th className="px-4 py-3">Title</th>
-                <th className="px-4 py-3">Department</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Uploaded By</th>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Actions</th>
+              <tr style={{ borderBottom: "1px solid rgba(125,255,107,0.1)" }}>
+                {["Title", "Department", "Status", "Uploaded By", "Date", ""].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: "12px 16px",
+                      color: "#697565",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      textAlign: "left",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {documents.map((document) => (
+              {documents.map((doc, i) => (
                 <tr
-                  key={document._id}
-                  className="bg-cream hover:bg-sage/10 text-sm text-dark divide-y divide-sage/20"
+                  key={doc._id}
+                  style={{
+                    borderTop: i > 0 ? "1px solid rgba(125,255,107,0.06)" : "none",
+                    transition: "background 0.15s",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(125,255,107,0.04)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
-                  <td className="px-4 py-3">{document.title}</td>
-                  <td className="px-4 py-3">{document.department || "-"}</td>
-                  <td className="px-4 py-3">
-                    <StatusBadge
-                      status={document.workflow?.currentStage || document.status || "Submitted"}
-                    />
+                  <td style={{ padding: "12px 16px", color: "#e8e8e4", fontSize: 13 }}>{doc.title}</td>
+                  <td style={{ padding: "12px 16px", color: "#a8b5a4", fontSize: 13 }}>{doc.department || "—"}</td>
+                  <td style={{ padding: "12px 16px" }}>
+                    <StatusBadge status={doc.workflow?.currentStage || doc.status || "Submitted"} />
                   </td>
-                  <td className="px-4 py-3">{document.uploadedBy?.name || "-"}</td>
-                  <td className="px-4 py-3">{formatDate(document.createdAt)}</td>
-                  <td className="px-4 py-3">
+                  <td style={{ padding: "12px 16px", color: "#a8b5a4", fontSize: 13 }}>{doc.uploadedBy?.name || "—"}</td>
+                  <td style={{ padding: "12px 16px", color: "#697565", fontSize: 12 }}>{formatDate(doc.createdAt)}</td>
+                  <td style={{ padding: "12px 16px" }}>
                     <button
                       type="button"
-                      onClick={() => navigate(`/documents/${document._id}`)}
-                      className="text-dark underline hover:text-darkest text-sm"
+                      onClick={() => navigate(`/documents/${doc._id}`)}
+                      style={{
+                        color: "#7DFF6B",
+                        background: "transparent",
+                        border: "1px solid rgba(125,255,107,0.25)",
+                        borderRadius: 6,
+                        padding: "4px 12px",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        transition: "all 0.15s",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(125,255,107,0.08)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
                       View
                     </button>
@@ -234,6 +268,7 @@ const Dashboard = () => {
           </table>
         )}
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };

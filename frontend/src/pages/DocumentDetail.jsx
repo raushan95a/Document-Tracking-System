@@ -1,18 +1,25 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import { MdArrowBack } from "react-icons/md";
 import StatusBadge from "../components/StatusBadge";
 import { useAuth } from "../context/AuthContext";
 import api, { getServerBaseUrl } from "../services/api";
 import { getSocket } from "../services/socket";
 import { DEPARTMENT_OPTIONS } from "../constants/departments";
 
-const formatDate = (dateString) =>
-  new Date(dateString).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+const formatDate = (s) =>
+  new Date(s).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+
+const inp = {
+  width: "100%", background: "#181a17", border: "1px solid rgba(125,255,107,0.15)",
+  borderRadius: 8, padding: "9px 12px", color: "#e8e8e4", fontSize: 13,
+  outline: "none", boxSizing: "border-box", appearance: "none", transition: "border-color 0.2s",
+};
+const lbl = { color: "#a8b5a4", fontSize: 12, fontWeight: 600, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" };
+const card = { background: "#111210", border: "1px solid rgba(125,255,107,0.1)", borderRadius: 12, padding: 24, marginBottom: 20 };
+const fi = (e) => (e.target.style.borderColor = "rgba(125,255,107,0.45)");
+const fo = (e) => (e.target.style.borderColor = "rgba(125,255,107,0.15)");
 
 const DocumentDetail = () => {
   const { id } = useParams();
@@ -22,17 +29,14 @@ const DocumentDetail = () => {
   const [document, setDocument] = useState(null);
   const [logs, setLogs] = useState([]);
   const [users, setUsers] = useState([]);
-
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [department, setDepartment] = useState("");
   const [remarks, setRemarks] = useState("");
   const [newFile, setNewFile] = useState(null);
-
   const [action, setAction] = useState("Approve");
   const [assignedTo, setAssignedTo] = useState("");
   const [targetDepartment, setTargetDepartment] = useState("");
-
   const [loadingDocument, setLoadingDocument] = useState(true);
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -41,20 +45,14 @@ const DocumentDetail = () => {
 
   const isAssignedToMe = useMemo(() => {
     if (!document?.workflow?.assignedTo || !user?._id) return false;
-    const assignedId =
-      typeof document.workflow.assignedTo === "string"
-        ? document.workflow.assignedTo
-        : document.workflow.assignedTo._id;
-    return assignedId?.toString() === user._id?.toString();
+    const id2 = typeof document.workflow.assignedTo === "string" ? document.workflow.assignedTo : document.workflow.assignedTo._id;
+    return id2?.toString() === user._id?.toString();
   }, [document, user]);
 
   const isUploader = useMemo(() => {
     if (!document?.uploadedBy || !user?._id) return false;
-    const uploaderId =
-      typeof document.uploadedBy === "string"
-        ? document.uploadedBy
-        : document.uploadedBy._id;
-    return uploaderId?.toString() === user._id?.toString();
+    const uid = typeof document.uploadedBy === "string" ? document.uploadedBy : document.uploadedBy._id;
+    return uid?.toString() === user._id?.toString();
   }, [document, user]);
 
   const canManageWorkflow = user?.role === "admin" || user?.role === "manager" || isAssignedToMe;
@@ -62,419 +60,214 @@ const DocumentDetail = () => {
   const canEditMetadata = canAccessActions;
 
   const assigneeDisplay = useMemo(() => {
-    const assignee = document?.workflow?.assignedTo;
-
-    if (!assignee) {
-      return "Unassigned";
-    }
-
-    return `${assignee.name} (${assignee.role})`;
+    const a = document?.workflow?.assignedTo;
+    if (!a) return "Unassigned";
+    return `${a.name} (${a.role})`;
   }, [document?.workflow?.assignedTo]);
 
   const fetchDocument = useCallback(async () => {
     setLoadingDocument(true);
-
     try {
-      const response = await api.get(`/documents/${id}`);
-      const data = response.data;
-
-      setDocument(data);
-      setTitle(data.title || "");
-      setDescription(data.description || "");
-      setDepartment(data.department || "");
-      setRemarks(data.remarks || "");
-
-      const assignedValue = data.workflow?.assignedTo;
-      setAssignedTo(
-        assignedValue
-          ? typeof assignedValue === "string"
-            ? assignedValue
-            : assignedValue._id
-          : ""
-      );
-      const assignedDepartment =
-        typeof assignedValue === "object" && assignedValue?.department
-          ? assignedValue.department
-          : "";
-      setTargetDepartment(assignedDepartment || data.department || "");
-    } catch (error) {
-      const message = error?.response?.data?.message || "Failed to fetch document";
-      toast.error(message);
-    } finally {
-      setLoadingDocument(false);
-    }
+      const res = await api.get(`/documents/${id}`);
+      const d = res.data;
+      setDocument(d); setTitle(d.title || ""); setDescription(d.description || "");
+      setDepartment(d.department || ""); setRemarks(d.remarks || "");
+      const av = d.workflow?.assignedTo;
+      setAssignedTo(av ? (typeof av === "string" ? av : av._id) : "");
+      const adept = typeof av === "object" && av?.department ? av.department : "";
+      setTargetDepartment(adept || d.department || "");
+    } catch (err) { toast.error(err?.response?.data?.message || "Failed to fetch document"); }
+    finally { setLoadingDocument(false); }
   }, [id]);
 
   const fetchLogs = useCallback(async () => {
     setLoadingLogs(true);
-
-    try {
-      const response = await api.get(`/documents/${id}/logs`);
-      setLogs(response.data || []);
-    } catch (error) {
-      const message = error?.response?.data?.message || "Failed to fetch document logs";
-      toast.error(message);
-    } finally {
-      setLoadingLogs(false);
-    }
+    try { const res = await api.get(`/documents/${id}/logs`); setLogs(res.data || []); }
+    catch (err) { toast.error(err?.response?.data?.message || "Failed to fetch logs"); }
+    finally { setLoadingLogs(false); }
   }, [id]);
 
   const fetchAssignableUsers = useCallback(async () => {
-    if (!canManageWorkflow) {
-      return;
-    }
-
+    if (!canManageWorkflow) return;
     setLoadingUsers(true);
-
-    try {
-      const response = await api.get("/users/assignable");
-      setUsers(response.data || []);
-    } catch (error) {
-      const message = error?.response?.data?.message || "Failed to fetch users";
-      toast.error(message);
-    } finally {
-      setLoadingUsers(false);
-    }
+    try { const res = await api.get("/users/assignable"); setUsers(res.data || []); }
+    catch (err) { toast.error(err?.response?.data?.message || "Failed to fetch users"); }
+    finally { setLoadingUsers(false); }
   }, [canManageWorkflow]);
 
-  useEffect(() => {
-    fetchDocument();
-    fetchLogs();
-    fetchAssignableUsers();
-  }, [fetchAssignableUsers, fetchDocument, fetchLogs]);
+  useEffect(() => { fetchDocument(); fetchLogs(); fetchAssignableUsers(); }, [fetchAssignableUsers, fetchDocument, fetchLogs]);
 
   useEffect(() => {
-    if (!token) {
-      return undefined;
-    }
-
+    if (!token) return undefined;
     const socket = getSocket(token);
-
-    if (!socket) {
-      return undefined;
-    }
-
+    if (!socket) return undefined;
     socket.emit("document:subscribe", id);
-
-    const handleDocumentUpdated = (payload) => {
-      if (payload?.documentId !== id) {
-        return;
-      }
-
-      fetchDocument();
-      fetchLogs();
-    };
-
-    socket.on("document:updated", handleDocumentUpdated);
-
-    return () => {
-      socket.emit("document:unsubscribe", id);
-      socket.off("document:updated", handleDocumentUpdated);
-    };
+    const handler = (payload) => { if (payload?.documentId !== id) return; fetchDocument(); fetchLogs(); };
+    socket.on("document:updated", handler);
+    return () => { socket.emit("document:unsubscribe", id); socket.off("document:updated", handler); };
   }, [fetchDocument, fetchLogs, id, token]);
 
-  const handleMetadataUpdate = async (event) => {
-    event.preventDefault();
-    setSavingMetadata(true);
-
+  const handleMetadataUpdate = async (e) => {
+    e.preventDefault(); setSavingMetadata(true);
     try {
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("remarks", remarks);
-      if ((user?.role === "admin" || user?.role === "manager") && department) {
-        formData.append("department", department);
-      }
-      if (newFile) {
-        formData.append("file", newFile);
-      }
-
-      await api.put(`/documents/${id}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      setNewFile(null);
-      toast.success("Document details updated");
+      const fd = new FormData();
+      fd.append("title", title); fd.append("description", description); fd.append("remarks", remarks);
+      if ((user?.role === "admin" || user?.role === "manager") && department) fd.append("department", department);
+      if (newFile) fd.append("file", newFile);
+      await api.put(`/documents/${id}`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+      setNewFile(null); toast.success("Document details updated");
       await Promise.all([fetchDocument(), fetchLogs()]);
-    } catch (error) {
-      const message = error?.response?.data?.message || "Failed to update document details";
-      toast.error(message);
-    } finally {
-      setSavingMetadata(false);
-    }
+    } catch (err) { toast.error(err?.response?.data?.message || "Failed to update"); }
+    finally { setSavingMetadata(false); }
   };
 
-  const handleWorkflowSubmit = async (event) => {
-    event.preventDefault();
-    setSubmittingWorkflow(true);
-
+  const handleWorkflowSubmit = async (e) => {
+    e.preventDefault(); setSubmittingWorkflow(true);
     try {
-      await api.put(`/workflow/${id}`, {
-        action,
-        assignedTo: action === "Forward" ? (assignedTo || null) : null,
-        remarks,
-        targetDepartment: action === "Forward" ? targetDepartment : undefined,
-      });
-
+      await api.put(`/workflow/${id}`, { action, assignedTo: action === "Forward" ? (assignedTo || null) : null, remarks, targetDepartment: action === "Forward" ? targetDepartment : undefined });
       toast.success(`Document ${action.toLowerCase()}d successfully`);
       await Promise.all([fetchDocument(), fetchLogs()]);
-    } catch (error) {
-      const message = error?.response?.data?.message || "Failed to update workflow";
-      toast.error(message);
-    } finally {
-      setSubmittingWorkflow(false);
-    }
+    } catch (err) { toast.error(err?.response?.data?.message || "Failed to update workflow"); }
+    finally { setSubmittingWorkflow(false); }
   };
 
-  if (loadingDocument) {
-    return (
-      <div className="bg-cream min-h-full p-6">
-        <div className="animate-spin border-2 border-dark border-t-transparent rounded-full w-5 h-5 mx-auto mt-20" />
-      </div>
-    );
-  }
+  const spinner = (
+    <div style={{ padding: 48, display: "flex", justifyContent: "center" }}>
+      <div style={{ width: 22, height: 22, border: "2px solid rgba(125,255,107,0.2)", borderTopColor: "#7DFF6B", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+    </div>
+  );
 
-  if (!document) {
-    return (
-      <div className="bg-cream min-h-full p-6 text-sage text-sm">
-        Unable to load document details.
-      </div>
-    );
-  }
+  if (loadingDocument) return <div style={{ minHeight: "100%", padding: 24 }}>{spinner}</div>;
+  if (!document) return <div style={{ minHeight: "100%", padding: 24, color: "#697565", fontSize: 14 }}>Unable to load document.</div>;
 
   return (
-    <div className="bg-cream min-h-full p-6">
-      <button
-        type="button"
-        onClick={() => navigate("/dashboard")}
-        className="text-sage text-sm hover:text-dark mb-4 cursor-pointer"
-      >
-        {"<- Back to Dashboard"}
+    <div style={{ minHeight: "100%", padding: 24 }}>
+      <button type="button" onClick={() => navigate("/dashboard")} style={{ display: "flex", alignItems: "center", gap: 6, color: "#697565", background: "transparent", border: "none", fontSize: 13, cursor: "pointer", marginBottom: 20, padding: 0, transition: "color 0.2s" }} onMouseEnter={(e) => (e.currentTarget.style.color = "#7DFF6B")} onMouseLeave={(e) => (e.currentTarget.style.color = "#697565")}>
+        <MdArrowBack style={{ fontSize: 16 }} /> Back to Dashboard
       </button>
 
-      <div className="bg-cream border border-sage/20 rounded-lg p-6 shadow-sm">
-        <h1 className="text-darkest text-xl font-semibold mb-4">{document.title}</h1>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      {/* info card */}
+      <div style={card}>
+        <h1 style={{ color: "#e8e8e4", fontSize: 18, fontWeight: 700, marginBottom: 20 }}>{document.title}</h1>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 16 }}>
+          {[
+            { label: "Department", value: document.department || "—" },
+            { label: "Assigned To", value: assigneeDisplay },
+            { label: "Uploaded By", value: document.uploadedBy?.name || "—" },
+            { label: "Date", value: formatDate(document.createdAt) },
+          ].map(({ label, value }) => (
+            <div key={label}>
+              <p style={{ color: "#697565", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{label}</p>
+              <p style={{ color: "#a8b5a4", fontSize: 13 }}>{value}</p>
+            </div>
+          ))}
           <div>
-            <p className="text-sage text-xs mb-1">Department</p>
-            <p className="text-dark text-sm">{document.department || "-"}</p>
-          </div>
-          <div>
-            <p className="text-sage text-xs mb-1">Status</p>
+            <p style={{ color: "#697565", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Status</p>
             <StatusBadge status={document.workflow?.currentStage || document.status || "Submitted"} />
           </div>
-          <div>
-            <p className="text-sage text-xs mb-1">Assigned To</p>
-            <p className="text-dark text-sm">{assigneeDisplay}</p>
-          </div>
-          <div>
-            <p className="text-sage text-xs mb-1">Uploaded By</p>
-            <p className="text-dark text-sm">{document.uploadedBy?.name || "-"}</p>
-          </div>
-          <div>
-            <p className="text-sage text-xs mb-1">Date</p>
-            <p className="text-dark text-sm">{formatDate(document.createdAt)}</p>
-          </div>
+          {document.fileUrl && (
+            <div>
+              <p style={{ color: "#697565", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>File</p>
+              <a href={`${getServerBaseUrl()}${document.fileUrl}`} target="_blank" rel="noreferrer" style={{ color: "#7DFF6B", fontSize: 13, textDecoration: "underline" }}>View File</a>
+            </div>
+          )}
         </div>
-
-        {document.fileUrl && (
-          <div>
-            <p className="text-sage text-xs mb-1">File</p>
-            <a
-              href={`${getServerBaseUrl()}${document.fileUrl}`}
-              target="_blank"
-              rel="noreferrer"
-              className="text-dark underline text-sm"
-            >
-              View File
-            </a>
-          </div>
-        )}
       </div>
 
+      {/* metadata edit */}
       {canEditMetadata && (
-        <form
-          onSubmit={handleMetadataUpdate}
-          className="mt-6 bg-cream border border-sage/20 rounded-lg p-6 shadow-sm"
-        >
-          <h2 className="text-darkest font-semibold mb-4">Update Document Details</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleMetadataUpdate} style={card}>
+          <h2 style={{ color: "#e8e8e4", fontSize: 15, fontWeight: 700, marginBottom: 18 }}>Update Document Details</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
             <div>
-              <label className="block text-sm text-dark font-medium mb-1">Title</label>
-              <input
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
-                required
-              />
+              <label style={lbl}>Title</label>
+              <input value={title} onChange={(e) => setTitle(e.target.value)} style={inp} required onFocus={fi} onBlur={fo} />
             </div>
-
             <div>
-              <label className="block text-sm text-dark font-medium mb-1">Department</label>
-              <select
-                value={department}
-                onChange={(event) => setDepartment(event.target.value)}
-                disabled={!(user?.role === "admin" || user?.role === "manager")}
-                className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm disabled:opacity-70"
-              >
-                <option value="">Select Department</option>
-                {DEPARTMENT_OPTIONS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
+              <label style={lbl}>Department</label>
+              <select value={department} onChange={(e) => setDepartment(e.target.value)} disabled={!(user?.role === "admin" || user?.role === "manager")} style={{ ...inp, opacity: !(user?.role === "admin" || user?.role === "manager") ? 0.5 : 1 }} onFocus={fi} onBlur={fo}>
+                <option value="" style={{ background: "#181a17" }}>Select Department</option>
+                {DEPARTMENT_OPTIONS.map((d) => <option key={d} value={d} style={{ background: "#181a17" }}>{d}</option>)}
               </select>
             </div>
           </div>
-
-          <div className="mt-4">
-            <label className="block text-sm text-dark font-medium mb-1">Description</label>
-            <textarea
-              rows={3}
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm resize-none"
-            />
+          <div style={{ marginBottom: 14 }}>
+            <label style={lbl}>Description</label>
+            <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} style={{ ...inp, resize: "none" }} onFocus={fi} onBlur={fo} />
           </div>
-
-          <div className="mt-4">
-            <label className="block text-sm text-dark font-medium mb-1">Remarks</label>
-            <textarea
-              rows={2}
-              value={remarks}
-              onChange={(event) => setRemarks(event.target.value)}
-              className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm resize-none"
-            />
+          <div style={{ marginBottom: 14 }}>
+            <label style={lbl}>Remarks</label>
+            <textarea rows={2} value={remarks} onChange={(e) => setRemarks(e.target.value)} style={{ ...inp, resize: "none" }} onFocus={fi} onBlur={fo} />
           </div>
-
-          <div className="mt-4">
-            <label className="block text-sm text-dark font-medium mb-1">Update Document File (Optional)</label>
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-              onChange={(event) => setNewFile(event.target.files?.[0] || null)}
-              className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
-            />
-            {newFile && <p className="text-dark text-xs mt-1">Replacing with: {newFile.name}</p>}
+          <div style={{ marginBottom: 18 }}>
+            <label style={lbl}>Replace File (Optional)</label>
+            <input type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onChange={(e) => setNewFile(e.target.files?.[0] || null)} style={{ ...inp, padding: "8px 12px" }} />
+            {newFile && <p style={{ color: "#7DFF6B", fontSize: 12, marginTop: 4 }}>Replacing with: {newFile.name}</p>}
           </div>
-
-          <button
-            type="submit"
-            disabled={savingMetadata}
-            className="mt-4 bg-dark text-cream px-4 py-2 rounded hover:bg-darkest text-sm disabled:opacity-70"
-          >
-            {savingMetadata ? "Saving..." : "Save Details"}
+          <button type="submit" disabled={savingMetadata} style={{ background: savingMetadata ? "rgba(125,255,107,0.5)" : "#7DFF6B", color: "#0d0f0c", fontWeight: 700, fontSize: 13, border: "none", borderRadius: 8, padding: "9px 22px", cursor: savingMetadata ? "not-allowed" : "pointer" }}>
+            {savingMetadata ? "Saving…" : "Save Details"}
           </button>
         </form>
       )}
 
+      {/* workflow */}
       {canAccessActions && (
-        <form
-          onSubmit={handleWorkflowSubmit}
-          className="mt-6 bg-cream border border-sage/20 rounded-lg p-6 shadow-sm"
-        >
-          <h2 className="text-darkest font-semibold mb-4">Workflow Action</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <form onSubmit={handleWorkflowSubmit} style={card}>
+          <h2 style={{ color: "#e8e8e4", fontSize: 15, fontWeight: 700, marginBottom: 18 }}>Workflow Action</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 14, marginBottom: 18 }}>
             <div>
-              <label className="block text-sm text-dark font-medium mb-1">Action</label>
-              <select
-                value={action}
-                onChange={(event) => setAction(event.target.value)}
-                className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
-              >
-                <option value="Approve">Approve</option>
-                <option value="Reject">Reject</option>
-                <option value="Forward">Forward</option>
+              <label style={lbl}>Action</label>
+              <select value={action} onChange={(e) => setAction(e.target.value)} style={inp} onFocus={fi} onBlur={fo}>
+                <option value="Approve" style={{ background: "#181a17" }}>Approve</option>
+                <option value="Reject" style={{ background: "#181a17" }}>Reject</option>
+                <option value="Forward" style={{ background: "#181a17" }}>Forward</option>
               </select>
             </div>
-
             {action === "Forward" && (
-              <div>
-                <label className="block text-sm text-dark font-medium mb-1">Assign To</label>
-                <select
-                  value={assignedTo}
-                  onChange={(event) => {
-                    const val = event.target.value;
-                    setAssignedTo(val);
-
-                    const selectedUser = users.find((item) => item._id === val);
-                    setTargetDepartment(selectedUser?.department || "");
-                  }}
-                  className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
-                  required
-                >
-                  <option value="">Select Assignee</option>
-                  {users.map((item) => (
-                    <option key={item._id} value={item._id}>
-                      {item.name} ({item.role}){item.department ? ` - ${item.department}` : ""}
-                    </option>
-                  ))}
-                </select>
-                {loadingUsers && (
-                  <div className="mt-2">
-                    <div className="animate-spin border-2 border-dark border-t-transparent rounded-full w-5 h-5" />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {action === "Forward" && (
-              <div>
-                <label className="block text-sm text-dark font-medium mb-1">Target Department</label>
-                <input
-                  type="text"
-                  value={targetDepartment}
-                  readOnly
-                  placeholder="Select assignee first"
-                  className="w-full bg-sage/10 border border-sage rounded px-3 py-2 text-darkest focus:outline-none text-sm cursor-not-allowed"
-                  required
-                />
-              </div>
+              <>
+                <div>
+                  <label style={lbl}>Assign To</label>
+                  {loadingUsers ? spinner : (
+                    <select value={assignedTo} onChange={(e) => { const v = e.target.value; setAssignedTo(v); const u = users.find((x) => x._id === v); setTargetDepartment(u?.department || ""); }} style={inp} required onFocus={fi} onBlur={fo}>
+                      <option value="" style={{ background: "#181a17" }}>Select Assignee</option>
+                      {users.map((u) => <option key={u._id} value={u._id} style={{ background: "#181a17" }}>{u.name} ({u.role}){u.department ? ` — ${u.department}` : ""}</option>)}
+                    </select>
+                  )}
+                </div>
+                <div>
+                  <label style={lbl}>Target Department</label>
+                  <input type="text" value={targetDepartment} readOnly placeholder="Select assignee first" style={{ ...inp, opacity: 0.6, cursor: "not-allowed" }} required />
+                </div>
+              </>
             )}
           </div>
-
-          <button
-            type="submit"
-            disabled={submittingWorkflow}
-            className="mt-4 bg-dark text-cream px-4 py-2 rounded hover:bg-darkest text-sm disabled:opacity-70"
-          >
-            {submittingWorkflow ? "Submitting..." : `Submit ${action}`}
+          <button type="submit" disabled={submittingWorkflow} style={{ background: submittingWorkflow ? "rgba(125,255,107,0.5)" : "#7DFF6B", color: "#0d0f0c", fontWeight: 700, fontSize: 13, border: "none", borderRadius: 8, padding: "9px 22px", cursor: submittingWorkflow ? "not-allowed" : "pointer" }}>
+            {submittingWorkflow ? "Submitting…" : `Submit ${action}`}
           </button>
         </form>
       )}
 
-      <section className="mt-6">
-        <h2 className="text-darkest font-semibold mb-3">Document History</h2>
-        <div className="bg-cream border border-sage/20 rounded-lg overflow-hidden shadow-sm">
-          {loadingLogs ? (
-            <div className="py-10">
-              <div className="animate-spin border-2 border-dark border-t-transparent rounded-full w-5 h-5 mx-auto" />
-            </div>
-          ) : logs.length === 0 ? (
-            <p className="text-sage text-sm text-center py-6">No history available</p>
+      {/* history */}
+      <section>
+        <h2 style={{ color: "#e8e8e4", fontSize: 15, fontWeight: 700, marginBottom: 14 }}>Document History</h2>
+        <div style={{ background: "#111210", border: "1px solid rgba(125,255,107,0.1)", borderRadius: 12, overflow: "hidden" }}>
+          {loadingLogs ? spinner : logs.length === 0 ? (
+            <p style={{ color: "#697565", fontSize: 13, textAlign: "center", padding: 32 }}>No history available</p>
           ) : (
-            <table className="w-full border-collapse">
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr className="bg-dark text-cream text-sm font-medium text-left">
-                  <th className="px-4 py-3">Action</th>
-                  <th className="px-4 py-3">Updated By</th>
-                  <th className="px-4 py-3">Timestamp</th>
+                <tr style={{ borderBottom: "1px solid rgba(125,255,107,0.1)" }}>
+                  {["Action", "Updated By", "Timestamp"].map((h) => (
+                    <th key={h} style={{ padding: "12px 16px", color: "#697565", fontSize: 11, fontWeight: 700, textAlign: "left", textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {logs.map((log) => (
-                  <tr
-                    key={log._id}
-                    className="bg-cream hover:bg-sage/10 text-sm text-dark divide-y divide-sage/20"
-                  >
-                    <td className="px-4 py-3">{log.action}</td>
-                    <td className="px-4 py-3">{log.updatedBy?.name || "-"}</td>
-                    <td className="px-4 py-3">{formatDate(log.timestamp)}</td>
+                {logs.map((log, i) => (
+                  <tr key={log._id} style={{ borderTop: i > 0 ? "1px solid rgba(125,255,107,0.06)" : "none" }}>
+                    <td style={{ padding: "11px 16px", color: "#e8e8e4", fontSize: 13 }}>{log.action}</td>
+                    <td style={{ padding: "11px 16px", color: "#a8b5a4", fontSize: 13 }}>{log.updatedBy?.name || "—"}</td>
+                    <td style={{ padding: "11px 16px", color: "#697565", fontSize: 12 }}>{formatDate(log.timestamp)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -482,6 +275,7 @@ const DocumentDetail = () => {
           )}
         </div>
       </section>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };

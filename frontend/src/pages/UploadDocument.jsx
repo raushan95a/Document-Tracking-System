@@ -1,9 +1,18 @@
 import React, { useState } from "react";
-import { MdUploadFile } from "react-icons/md";
+import { MdUploadFile, MdInsertDriveFile } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../services/api";
 import { DEPARTMENT_OPTIONS } from "../constants/departments";
+
+const inp = {
+  width: "100%", background: "#181a17", border: "1px solid rgba(125,255,107,0.15)",
+  borderRadius: 8, padding: "10px 12px", color: "#e8e8e4", fontSize: 13,
+  outline: "none", boxSizing: "border-box", transition: "border-color 0.2s", appearance: "none",
+};
+const lbl = { color: "#a8b5a4", fontSize: 12, fontWeight: 600, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" };
+const fi = (e) => (e.target.style.borderColor = "rgba(125,255,107,0.45)");
+const fo = (e) => (e.target.style.borderColor = "rgba(125,255,107,0.15)");
 
 const UploadDocument = () => {
   const [title, setTitle] = useState("");
@@ -13,120 +22,65 @@ const UploadDocument = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    if (!file) {
-      toast.error("Please select a file");
-      return;
-    }
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!file) { toast.error("Please select a file"); return; }
     setLoading(true);
-
     try {
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("department", department);
-      formData.append("file", file);
-
-      await api.post("/documents", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
+      const fd = new FormData();
+      fd.append("title", title); fd.append("description", description);
+      fd.append("department", department); fd.append("file", file);
+      await api.post("/documents", fd, { headers: { "Content-Type": "multipart/form-data" } });
       toast.success("Document uploaded successfully");
       navigate("/dashboard");
-    } catch (error) {
-      const message = error?.response?.data?.message || "Upload failed";
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Upload failed");
+    } finally { setLoading(false); }
   };
 
   return (
-    <div className="bg-cream min-h-full p-6">
-      <h1 className="text-darkest text-xl font-semibold mb-6">Upload Document</h1>
-
-      <form
-        onSubmit={handleSubmit}
-        className="bg-cream border border-sage/20 rounded-lg p-6 shadow-sm max-w-xl"
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm text-dark font-medium mb-1">Title</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-dark font-medium mb-1">Description</label>
-            <textarea
-              rows={3}
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              className="w-full bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-dark font-medium mb-1">Department</label>
-            <select
-              value={department}
-              onChange={(event) => setDepartment(event.target.value)}
-              className="w-full appearance-none bg-cream border border-sage rounded px-3 py-2 text-darkest focus:outline-none focus:ring-2 focus:ring-dark text-sm"
-              required
-            >
-              <option value="">Select Department</option>
-              {DEPARTMENT_OPTIONS.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm text-dark font-medium mb-2">File</label>
-            <label
-              htmlFor="file-upload"
-              className="border-2 border-dashed border-sage/40 rounded-lg p-6 text-center cursor-pointer hover:border-sage block"
-            >
-              <MdUploadFile className="text-3xl text-sage mb-2 mx-auto" />
-              <p className="text-sage text-sm">Click to upload or drag and drop</p>
-              <p className="text-sage/60 text-xs mt-1">PDF, DOC, DOCX, PNG, JPG (max 5MB)</p>
-              {file && <p className="text-dark text-sm mt-3">{file.name}</p>}
-            </label>
-            <input
-              id="file-upload"
-              type="file"
-              className="hidden"
-              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-              onChange={(event) => setFile(event.target.files?.[0] || null)}
-            />
-          </div>
+    <div style={{ minHeight: "100%", padding: 24 }}>
+      <h1 style={{ color: "#e8e8e4", fontSize: 20, fontWeight: 700, marginBottom: 24 }}>Upload Document</h1>
+      <form onSubmit={handleSubmit} style={{ background: "#111210", border: "1px solid rgba(125,255,107,0.1)", borderRadius: 12, padding: 28, maxWidth: 560 }}>
+        <div style={{ marginBottom: 18 }}>
+          <label style={lbl}>Title</label>
+          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} style={inp} placeholder="Document title" required onFocus={fi} onBlur={fo} />
         </div>
-
-        <div className="mt-6 flex gap-3">
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-dark text-cream px-6 py-2 rounded hover:bg-darkest text-sm disabled:opacity-70"
-          >
-            {loading ? "Loading..." : "Submit"}
+        <div style={{ marginBottom: 18 }}>
+          <label style={lbl}>Description</label>
+          <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} style={{ ...inp, resize: "none" }} placeholder="Optional…" onFocus={fi} onBlur={fo} />
+        </div>
+        <div style={{ marginBottom: 22 }}>
+          <label style={lbl}>Department</label>
+          <select value={department} onChange={(e) => setDepartment(e.target.value)} style={inp} required onFocus={fi} onBlur={fo}>
+            <option value="" style={{ background: "#181a17" }}>Select Department</option>
+            {DEPARTMENT_OPTIONS.map((d) => <option key={d} value={d} style={{ background: "#181a17" }}>{d}</option>)}
+          </select>
+        </div>
+        <div style={{ marginBottom: 28 }}>
+          <label style={lbl}>File</label>
+          <label htmlFor="file-upload" style={{ display: "block", border: `2px dashed ${file ? "rgba(125,255,107,0.5)" : "rgba(125,255,107,0.2)"}`, borderRadius: 10, padding: "32px 16px", textAlign: "center", cursor: "pointer", background: file ? "rgba(125,255,107,0.05)" : "transparent", transition: "all 0.2s" }}>
+            {file ? (
+              <>
+                <MdInsertDriveFile style={{ fontSize: 32, color: "#7DFF6B", marginBottom: 8 }} />
+                <p style={{ color: "#7DFF6B", fontSize: 13, fontWeight: 600 }}>{file.name}</p>
+                <p style={{ color: "#697565", fontSize: 11, marginTop: 4 }}>Click to replace</p>
+              </>
+            ) : (
+              <>
+                <MdUploadFile style={{ fontSize: 32, color: "#697565", marginBottom: 8 }} />
+                <p style={{ color: "#a8b5a4", fontSize: 13 }}>Click to upload or drag &amp; drop</p>
+                <p style={{ color: "#697565", fontSize: 11, marginTop: 4 }}>PDF, DOC, DOCX, PNG, JPG (max 5 MB)</p>
+              </>
+            )}
+          </label>
+          <input id="file-upload" type="file" style={{ display: "none" }} accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+        </div>
+        <div style={{ display: "flex", gap: 12 }}>
+          <button type="submit" disabled={loading} style={{ background: loading ? "rgba(125,255,107,0.5)" : "#7DFF6B", color: "#0d0f0c", fontWeight: 700, fontSize: 13, border: "none", borderRadius: 8, padding: "10px 24px", cursor: loading ? "not-allowed" : "pointer" }}>
+            {loading ? "Uploading…" : "Submit"}
           </button>
-          <button
-            type="button"
-            onClick={() => navigate("/dashboard")}
-            className="border border-sage text-sage px-6 py-2 rounded hover:bg-sage hover:text-cream text-sm"
-          >
+          <button type="button" onClick={() => navigate("/dashboard")} style={{ background: "transparent", color: "#a8b5a4", border: "1px solid rgba(125,255,107,0.18)", borderRadius: 8, padding: "10px 24px", fontSize: 13, cursor: "pointer" }}>
             Cancel
           </button>
         </div>
