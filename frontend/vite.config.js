@@ -4,11 +4,11 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://13.126.126.158:5000",
+        target: "https://api.jayeshkrishna.me",
         changeOrigin: true,
       },
       "/uploads": {
-        target: "http://13.126.126.158:5000",
+        target: "https://api.jayeshkrishna.me",
         changeOrigin: true,
       },
     },
